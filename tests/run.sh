@@ -8,6 +8,7 @@ export XDG_CONFIG_HOME="$testdir/config" XDG_DATA_HOME="$testdir/data" XDG_CACHE
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/smoke.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/integration.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -c "luafile $root/tests/menu.lua"
+nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -c "luafile $root/tests/menu-foreign.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -c "luafile $root/tests/menu-cases.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -c "luafile $root/tests/menu-stale.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -c "luafile $root/tests/menu-unsupported.lua"
