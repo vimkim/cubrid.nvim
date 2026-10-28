@@ -77,7 +77,7 @@ start = function()
   session.phase = 'starting'
   local first = next(session.buffers)
   local id = vim.lsp.start({
-    name = 'cubrid', cmd = { config.server }, root_dir = vim.uv.cwd(),
+    name = 'cubrid', cmd = { config.server }, root_dir = vim.uv.cwd(), exit_timeout = 2000,
     init_options = { cubrid = config.settings },
     on_init = function(client)
       if session.phase ~= 'starting' then return end
