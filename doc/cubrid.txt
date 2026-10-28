@@ -1,0 +1,43 @@
+*cubrid.txt*                   CUBRID for Neovim
+
+The plugin uses the shared CUBRID language server for completion and syntax
+diagnostics. It never executes SQL. Neovim 0.12.5 is the tested version.
+
+SETUP                                                        *cubrid-setup*
+
+Call require('cubrid').setup(options) from trusted user Lua before opening a
+file. Each call replaces all previous options. Unknown or invalid options
+raise an error and leave the last valid settings in effect.
+
+server_path       Absolute server executable. Omit to use
+                  cubrid-language-server on the editor host's PATH.
+sql               Set true to associate .sql with cubrid. Default false.
+parser_worker     Absolute path to the qualified native worker.
+runtime_prefix    Absolute path to its matching runtime. Set both paths.
+worker_manifest   Optional absolute manifest path. Requires the native pair.
+worker_timeout    Positive seconds up to 300. Requires the native pair.
+profile           Nonempty parser profile override.
+script_mode       "sql" or "csql".
+config_path       Absolute metadata configuration path.
+schema_snapshot   Omit to inherit project metadata, use vim.NIL to disable,
+                  or set an absolute snapshot path.
+
+Explicit executable paths come only from this Lua configuration. The plugin
+starts one server using an argv array and shares it across CUBRID buffers.
+The server discovers metadata independently for each file. For an untitled
+buffer, the initialize root URI is the editor's current directory at server
+startup. The server may discover metadata from that directory.
+
+:CubridReloadSchema                                       *:CubridReloadSchema*
+    Reload snapshots and report availability and stale state per document.
+    A failed reload retains the last valid metadata.
+
+:CubridRestart                                                 *:CubridRestart*
+    Stop and restart the owned language server. Use this command to retry a
+    missing or failed server. A changed server_path also triggers a restart.
+
+The native server reports unsupported coverage and runtime failures as
+diagnostics. An empty diagnostic list does not certify all SQL. Highlighting
+and indentation are lexical and do not format or validate SQL.
+
+vim:tw=78:ts=8:noet:ft=help:norl:
