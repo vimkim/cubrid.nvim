@@ -1,5 +1,5 @@
 local dir = assert(vim.env.CUBRID_TEST_DIR)
-local server = '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server'
+local server = (vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server')
 local worker = '/home/vimkim/gh/cubrid-language-tools/native/parser-worker/build/parser-worker'
 local runtime = '/home/vimkim/.cub/install/develop/debug'
 local snapshot = dir .. '/startup.json'

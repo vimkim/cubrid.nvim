@@ -8,7 +8,7 @@ cubrid.setup({server_path = '/missing/cubrid-language-server'})
 vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/missing.csql'))
 wait(function() return #notes > 0 end, 'missing server notice')
 assert(notes[1]:find('not executable', 1, true), 'missing executable reported')
-cubrid.setup({server_path = '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server'})
+cubrid.setup({server_path = (vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server')})
 wait(function() return #vim.lsp.get_clients({name = 'cubrid'}) == 1 and vim.lsp.get_clients({name = 'cubrid'})[1].initialized end, 'retry with valid server')
 local client = vim.lsp.get_clients({name = 'cubrid'})[1]
 vim.api.nvim_buf_set_lines(0, 0, -1, false, {'SELect'})

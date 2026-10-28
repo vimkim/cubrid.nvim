@@ -1,5 +1,5 @@
 local base = assert(vim.env.CUBRID_TEST_DIR)
-local server = '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server'
+local server = (vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server')
 local worker = '/home/vimkim/gh/cubrid-language-tools/native/parser-worker/build/parser-worker'
 local runtime = '/home/vimkim/.cub/install/develop/debug'
 assert(vim.fn.executable(server) == 1 and vim.fn.executable(worker) == 1 and vim.fn.isdirectory(runtime) == 1, 'native prerequisites required')

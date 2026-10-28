@@ -1,7 +1,7 @@
 local dir = assert(vim.env.CUBRID_TEST_DIR)
 vim.notify = function() end
 vim.cmd('filetype plugin indent on')
-require('cubrid').setup({server_path='/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server'})
+require('cubrid').setup({server_path=(vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server')})
 vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/exit.csql'))
 assert(vim.wait(12000, function() local c=vim.lsp.get_clients({name='cubrid'}); return #c == 1 and c[1].initialized end, 50), 'client initialized')
 local pid = vim.fn.getpid()

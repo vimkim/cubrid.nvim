@@ -12,7 +12,7 @@ vim.notify = function() end
 vim.cmd('cd ' .. vim.fn.fnameescape(dir))
 vim.cmd('filetype plugin indent on')
 local cubrid = require('cubrid')
-cubrid.setup({ server_path = '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server' })
+cubrid.setup({ server_path = (vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server') })
 vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/one.csql'))
 local first = vim.api.nvim_get_current_buf()
 wait(function() local c = vim.lsp.get_clients({name='cubrid'}); return #c == 1 and c[1].initialized end, 'first client')
