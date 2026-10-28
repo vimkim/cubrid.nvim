@@ -93,6 +93,10 @@ vim.cmd('edit ' .. vim.fn.fnameescape(base .. '/nested/second.csql'))
 local two = vim.api.nvim_get_current_buf()
 wait(function() return client.attached_buffers[two] end, 'second attached')
 check(#clients() == 1 and client.attached_buffers[one], 'one session for roots')
+vim.bo[two].filetype = 'sql'
+wait(function() return not client.attached_buffers[two] end, 'filetype change detaches')
+vim.bo[two].filetype = 'cubrid'
+wait(function() return client.attached_buffers[two] end, 'filetype change reattaches')
 require('cubrid').setup(opts)
 check(#clients() == 1, 'idempotent setup')
 local old = client.id
