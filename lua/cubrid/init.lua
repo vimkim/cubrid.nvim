@@ -1,4 +1,5 @@
 local M = {}
+local completion = require('cubrid.completion')
 local session = { phase = 'idle', buffers = {} }
 local keys = {
   server_path = true, sql = true, parser_worker = true, runtime_prefix = true,
@@ -62,7 +63,7 @@ end
 local start
 local function attach_all(client)
   for buf in pairs(session.buffers) do
-    if eligible(buf) then vim.lsp.buf_attach_client(buf, client.id) else session.buffers[buf] = nil end
+    if eligible(buf) then completion.prepare(buf); vim.lsp.buf_attach_client(buf, client.id) else session.buffers[buf] = nil end
   end
 end
 
@@ -76,9 +77,11 @@ start = function()
   end
   session.phase = 'starting'
   local first = next(session.buffers)
+  completion.prepare(first)
   local id = vim.lsp.start({
     name = 'cubrid', cmd = { config.server }, root_dir = vim.uv.cwd(), exit_timeout = 2000,
     init_options = { cubrid = config.settings },
+    on_attach = function(client, buf) completion.attach(buf, client) end,
     on_init = function(client)
       if session.phase ~= 'starting' then return end
       session.phase = 'running'
@@ -88,6 +91,7 @@ start = function()
     on_exit = function(code, _, client_id)
       vim.schedule(function()
         if session.client ~= client_id then return end
+        for buf in pairs(session.buffers) do completion.detach(buf) end
         session.client = nil
         if session.phase == 'disposed' then
           return
@@ -110,7 +114,7 @@ local function attach(buf)
   if session.phase == 'idle' then start()
   elseif session.phase == 'running' or session.phase == 'starting' then
     local client = vim.lsp.get_client_by_id(session.client)
-    if client then vim.lsp.buf_attach_client(buf, client.id) end
+    if client then completion.prepare(buf); vim.lsp.buf_attach_client(buf, client.id) end
   end
 end
 
@@ -119,6 +123,7 @@ function M.restart()
   local client = session.client and vim.lsp.get_client_by_id(session.client)
   if client then
     session.phase = 'stopping'
+    for buf in pairs(session.buffers) do completion.detach(buf, client.id) end
     client:stop()
   else
     session.phase = 'idle'
@@ -156,10 +161,11 @@ function M.setup(options)
       elseif session.buffers[args.buf] then
         session.buffers[args.buf] = nil
         local client = session.client and vim.lsp.get_client_by_id(session.client)
-        if client then vim.lsp.buf_detach_client(args.buf, client.id) end
+        if client then completion.detach(args.buf, client.id); vim.lsp.buf_detach_client(args.buf, client.id) end
       end
     end })
-    vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) session.buffers[args.buf] = nil end })
+    vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) completion.detach(args.buf); session.buffers[args.buf] = nil end })
+    vim.api.nvim_create_autocmd('LspDetach', { group = group, callback = function(args) completion.detach(args.buf, args.data.client_id) end })
     vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = function()
       session.phase = 'disposed'
       local client = session.client and vim.lsp.get_client_by_id(session.client)

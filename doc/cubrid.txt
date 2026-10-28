@@ -29,6 +29,24 @@ an unnamed buffer uses URI file://. The current server searches for its
 metadata from the parent of the initialize root, which is the editor current
 directory when the server starts.
 
+COMPLETION                                                *cubrid-completion*
+
+In Insert mode, press CTRL-X CTRL-O, select with CTRL-N, and accept with
+CTRL-Y. CTRL-E cancels. The plugin owns the buffer-local omnifunc while its
+CUBRID client is attached. On detach it restores the previous value only if
+the value still belongs to the plugin. Other completion clients keep their
+own handlers. The menu uses CUBRID server results only.
+
+The adapter supports plain, single-line text edits whose range contains the
+request cursor. Multiline edits, snippets, insert/replace edits, commands,
+additional edits, and items requiring resolution are reported as unsupported.
+For example, an unclosed quoted identifier at the end of a file can return a
+multiline edit. The adapter does not show a partial menu for such a response.
+If the buffer changes while a request is pending, the response is discarded.
+If an edit invalidates a visible menu, the plugin cancels it and reports the
+cancellation. A stale refusal after native insertion preserves the current
+buffer text and does not claim that the server edit was applied.
+
 :CubridReloadSchema                                       *:CubridReloadSchema*
     Reload snapshots and report availability and stale state per document.
     A failed reload retains the last valid metadata.

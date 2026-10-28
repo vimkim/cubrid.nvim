@@ -25,7 +25,7 @@ A temporary diagnostic probe removed optional Neovim capability and trace fields
 
 ## Limits
 
-The completion test applies the server's text edit using Neovim's public `vim.lsp.util.apply_text_edits` API. It does not test an interactive completion menu selection. The cleanup test observes the direct server process and graceful LSP shutdown. It does not prove cleanup of orphaned descendants after a forced server kill. The plugin provides lexical highlighting and basic indentation, not SQL formatting or complete grammar coverage.
+The original alpha completion test applied the server edit with `vim.lsp.util.apply_text_edits`. It did not test an interactive completion menu selection. The follow-up below adds that test. The cleanup test observes the direct server process and graceful LSP shutdown. It does not prove cleanup of orphaned descendants after a forced server kill. The plugin provides lexical highlighting and basic indentation, not SQL formatting or complete grammar coverage.
 
 ## Candidate server result
 
@@ -54,4 +54,44 @@ The installed package passed these checks:
 
 The first initialize root was `file:///home/vimkim/gh/cubrid.nvim-alpha`, the editor working directory used for the test. In the separate project test the initialize root was the nested project directory. Neovim used `file://` for the unnamed buffer. The candidate server treated its empty path as the root and found the parent directory's snapshot. The test verified that behavior rather than changing the URI.
 
-The direct-child checks do not establish descendant cleanup after a forced server kill. They also do not establish which signal ended the child during editor exit. The interactive completion menu, lower Neovim versions, and other platforms remain unverified.
+The direct-child checks do not establish descendant cleanup after a forced server kill. They also do not establish which signal ended the child during editor exit. That original run did not verify the interactive menu. Lower Neovim versions and other platforms remain unverified.
+
+## Completion menu follow-up
+
+The follow-up dispatch was `9cf5bb620efed783ccfa0bee76da814181eccb3d`, based on consumer commit `453c091e102b3d7c6649d37c55983ace06067bd5`. Regression commit `d02adc8` exercised the visible native menu on Neovim 0.12.5. It failed with `expected SELECT '가😀'; SELECT; got SELECT '가😀'; SELECTect`. The server supplied the full UTF-16 range; Neovim's native menu inserted its word only through the request cursor.
+
+The fixed menu uses the CUBRID client's plain single-line `textEdit` range and text. It reports and refuses unsupported response forms, including multiline edits. The actual server returns a multiline edit for an unclosed quoted identifier at end of file. Closed quoted and qualified identifiers are covered by the menu tests. The menu uses only the owned CUBRID client. The previous buffer-local omnifunc is restored on detach if it has not since been changed.
+
+The following archive was built with `scripts/package.sh` and extracted into an empty directory. Its SHA-256 is `fb8e0eb4443d37e960913fe278883251485dd35d5a39d8e05478de971df27b01`.
+
+```sh
+scripts/package.sh /home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/artifact/cubrid.nvim-menu-release.tar.gz
+tar -xzf /home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/artifact/cubrid.nvim-menu-release.tar.gz -C /home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/installed-release
+CUBRID_TEST_SERVER=/home/vimkim/temp/cubrid-lsp-enums-venv/bin/cubrid-language-server \
+CUBRID_TEST_DIR=/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/release-profile \
+/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/installed-release/tests/run.sh
+```
+
+The installed suite passed with server source `d5a571eb03d543af1438b85933fcad3aed60f9f0` and server checkout report tip `3efe03b49a037041fe6e667acb990fc8403c3ab0`. The worker and runtime paths remain those in the host section. Output is `/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/release-output.txt`. Use new empty extraction and profile directories when repeating the commands.
+
+The visible menu tests cover Korean and emoji before the range, suffix and no suffix, closed quoted and qualified names, multiple choices, cancellation, cursor position, one undo after repeated selection, and CRLF save. A proxy delays the real server response to test intervening input, overlapping requests, client restart, and a buffer switch. A menu-open edit on another row cancels the menu and preserves that edit. The proxy also supplies two test items with identical labels and different edit starts to verify selection identity. The multiline refusal and omnifunc ownership have separate tests.
+
+The independent `neovim-independent/menu-visible.lua` probe also passed against the extracted archive. Its fresh profile and observed menu are in `/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/independent-release/menu-observed.txt`; it recorded `accepted=SELECT '가😀'; SELECT`. The probe used the same headless command as `neovim-independent/run-probe.sh`, with `CUBRID_PLUGIN_ROOT` set to the extracted archive and all XDG paths set under that fresh profile.
+
+To rerun the independent probe with a fresh profile:
+
+```sh
+profile=/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/independent-release
+mkdir -p "$profile"
+CUBRID_TEST_DIR="$profile" \
+CUBRID_TEST_SERVER=/home/vimkim/temp/cubrid-lsp-enums-venv/bin/cubrid-language-server \
+CUBRID_PLUGIN_ROOT=/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-menu/installed-release \
+XDG_CONFIG_HOME="$profile/config" XDG_DATA_HOME="$profile/data" \
+XDG_CACHE_HOME="$profile/cache" XDG_STATE_HOME="$profile/state" \
+nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' \
+  -c 'luafile /home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-independent/menu-visible.lua'
+```
+
+The test suite does not replay a duplicate accepted `CompleteDone` event. The adapter clears its context before applying the suffix deletion.
+
+The adapter deliberately rejects snippets, insert/replace edits, completion commands, additional edits, resolution-dependent items, multiline text, and multiline ranges. It does not claim complete support for every possible server completion response. A stale refusal after native insertion preserves the current text; it cannot undo an insertion that Neovim has already made. Lower Neovim versions, other platforms, and forced descendant cleanup remain unverified.
