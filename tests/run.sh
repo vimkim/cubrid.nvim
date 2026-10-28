@@ -12,6 +12,11 @@ nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PL
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/startup.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/exit.lua"
 for pid in $(cat "$testdir/exit-children"); do
+  attempts=0
+  while kill -0 "$pid" 2>/dev/null && [ "$attempts" -lt 50 ]; do
+    sleep 0.1
+    attempts=$((attempts + 1))
+  done
   if kill -0 "$pid" 2>/dev/null; then
     printf 'Owned child %s survived editor exit\n' "$pid" >&2
     exit 1
