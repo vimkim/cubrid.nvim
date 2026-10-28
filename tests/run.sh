@@ -10,3 +10,11 @@ nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PL
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/missing.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/metadata.lua"
 nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/startup.lua"
+nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/exit.lua"
+for pid in $(cat "$testdir/exit-children"); do
+  if kill -0 "$pid" 2>/dev/null; then
+    printf 'Owned child %s survived editor exit\n' "$pid" >&2
+    exit 1
+  fi
+done
+printf 'Owned direct children exited with Neovim\n'

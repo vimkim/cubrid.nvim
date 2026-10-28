@@ -89,7 +89,9 @@ start = function()
       vim.schedule(function()
         if session.client ~= client_id then return end
         session.client = nil
-        if session.phase == 'stopping' then
+        if session.phase == 'disposed' then
+          return
+        elseif session.phase == 'stopping' then
           session.phase = 'idle'
           start()
         else
@@ -150,6 +152,11 @@ function M.setup(options)
     local group = vim.api.nvim_create_augroup('cubrid', { clear = true })
     vim.api.nvim_create_autocmd('FileType', { group = group, pattern = 'cubrid', callback = function(args) attach(args.buf) end })
     vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) session.buffers[args.buf] = nil end })
+    vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = function()
+      session.phase = 'disposed'
+      local client = session.client and vim.lsp.get_client_by_id(session.client)
+      if client then client:stop() end
+    end })
     vim.api.nvim_create_user_command('CubridReloadSchema', function() M.reload_schema() end, {})
     vim.api.nvim_create_user_command('CubridRestart', function() M.restart() end, {})
   end
