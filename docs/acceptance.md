@@ -95,3 +95,22 @@ nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PL
 The test suite does not replay a duplicate accepted `CompleteDone` event. The adapter clears its context before applying the suffix deletion.
 
 The adapter deliberately rejects snippets, insert/replace edits, completion commands, additional edits, resolution-dependent items, multiline text, and multiline ranges. It does not claim complete support for every possible server completion response. A stale refusal after native insertion preserves the current text; it cannot undo an insertion that Neovim has already made. Lower Neovim versions, other platforms, and forced descendant cleanup remain unverified.
+
+## Deferred menu ownership follow-up
+
+The dispatch was `e1cb28dd10990356c5bc6b9ec6f41af9d5332a6b`, descended from `b02e13e0a5aa8996bef435f91f4f3d7ad8cdd7cb`. Regression commit `ffaedbd` reproduced the foreign menu cancellation in Neovim 0.12.5. Its fresh profile recorded `foreign-before` with `pum_visible = 1`, `foreign-after` with `pum_visible = 0`, and `FAIL foreign menu cancelled after filetype detach`, exit 5. The output is in `/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-ownership/red/menu-observed.txt`.
+
+Commit `6673f8f3a5d1c16650410baee412bfc783a7069e` checks every displayed item's existing CUBRID epoch, generation, and choice identity before cancelling. Fresh headless tests preserved a replacement foreign menu and a mixed menu, and cancelled the old owned menu after detach. The profile records are in `neovim-ownership/final-profile/menu-observed.txt`. The existing overlapping-request test covers a newer request and completion, but does not establish that its popup was already visible before the old scheduled callback ran.
+
+The archive was built from commit `6673f8f3a5d1c16650410baee412bfc783a7069e`. Its SHA-256 is `94ea53e891e261693f1c1472cb8929cb8dbb3190fbb3c18ee55f110ef140f824`. The extracted package matched every packaged source path using `diff -qr`. The candidate server and read-only worker and runtime inputs are the same as in the candidate server result above.
+
+```sh
+base=/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-ownership
+scripts/package.sh "$base/artifact/cubrid.nvim-final.tar.gz"
+mkdir -p "$base/final-installed" "$base/final-profile"
+tar -xzf "$base/artifact/cubrid.nvim-final.tar.gz" -C "$base/final-installed"
+CUBRID_TEST_SERVER=/home/vimkim/temp/cubrid-lsp-enums-venv/bin/cubrid-language-server \
+CUBRID_TEST_DIR="$base/final-profile" "$base/final-installed/tests/run.sh"
+```
+
+Use new empty extraction and profile directories to repeat the test. The full suite output is `neovim-ownership/final-output.txt`. The independent `menu-visible.lua` probe used the final extracted package and a fresh XDG profile. It recorded `accepted=SELECT '가😀'; SELECT` and `PASS menu suffix replacement` in `neovim-ownership/final-independent/menu-observed.txt`.
