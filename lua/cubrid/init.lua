@@ -26,7 +26,7 @@ local function parse(options)
     values.runtimePrefix = absolute(options.runtime_prefix, 'runtime_prefix')
     if options.worker_manifest ~= nil then values.workerManifest = absolute(options.worker_manifest, 'worker_manifest') end
     if options.worker_timeout ~= nil then
-      if type(options.worker_timeout) ~= 'number' or options.worker_timeout <= 0 or options.worker_timeout > 300 then error('worker_timeout must be positive and at most 300', 3) end
+      if type(options.worker_timeout) ~= 'number' or options.worker_timeout ~= options.worker_timeout or options.worker_timeout <= 0 or options.worker_timeout > 300 then error('worker_timeout must be positive and at most 300', 3) end
       values.workerTimeout = options.worker_timeout
     end
   elseif options.worker_manifest ~= nil or options.worker_timeout ~= nil then
@@ -80,7 +80,7 @@ start = function()
     name = 'cubrid', cmd = { config.server }, root_dir = vim.uv.cwd(),
     init_options = { cubrid = config.settings },
     on_init = function(client)
-      if session.phase == 'stopping' then return end
+      if session.phase ~= 'starting' then return end
       session.phase = 'running'
       update(client)
       attach_all(client)
@@ -140,7 +140,7 @@ function M.reload_schema(callback)
 end
 
 function M.setup(options)
-  local config = parse(options or {})
+  local config = parse(options == nil and {} or options)
   local previous = session.config
   session.config = config
   if not session.registered then
@@ -150,7 +150,15 @@ function M.setup(options)
       ['.*%.[sS][qQ][lL]'] = function() if session.config.sql then return 'cubrid' end end,
     } })
     local group = vim.api.nvim_create_augroup('cubrid', { clear = true })
-    vim.api.nvim_create_autocmd('FileType', { group = group, pattern = 'cubrid', callback = function(args) attach(args.buf) end })
+    vim.api.nvim_create_autocmd('FileType', { group = group, callback = function(args)
+      if eligible(args.buf) then
+        attach(args.buf)
+      elseif session.buffers[args.buf] then
+        session.buffers[args.buf] = nil
+        local client = session.client and vim.lsp.get_client_by_id(session.client)
+        if client then vim.lsp.buf_detach_client(args.buf, client.id) end
+      end
+    end })
     vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) session.buffers[args.buf] = nil end })
     vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = function()
       session.phase = 'disposed'
