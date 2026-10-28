@@ -31,4 +31,4 @@ Set `sql = true` and reopen a file to opt in to `.sql`. The default leaves gener
 
 Omit `schema_snapshot` to inherit project metadata for each file. An absolute path selects a snapshot for every file. `vim.NIL` disables schema metadata. `:CubridReloadSchema` reloads snapshots and reports each document's availability and stale state. `:CubridRestart` restarts the server. Each `setup` call replaces the previous options, so include every option you want to retain.
 
-One server handles files in multiple directories and discovers project metadata per file. Untitled buffers can inherit metadata from the server's starting directory. See `:help cubrid` for options and limits.
+One server handles files in multiple directories and discovers project metadata per file. On Neovim 0.12.5, an unnamed buffer uses `file://`; the current server searches for its project metadata from the parent of the server's starting directory. See `:help cubrid` for options and limits.

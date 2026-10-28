@@ -24,9 +24,10 @@ schema_snapshot   Omit to inherit project metadata, use vim.NIL to disable,
 
 Explicit executable paths come only from this Lua configuration. The plugin
 starts one server using an argv array and shares it across CUBRID buffers.
-The server discovers metadata independently for each file. For an untitled
-buffer, the initialize root URI is the editor's current directory at server
-startup. The server may discover metadata from that directory.
+The server discovers metadata independently for each file. On Neovim 0.12.5,
+an unnamed buffer uses URI file://. The current server searches for its
+metadata from the parent of the initialize root, which is the editor current
+directory when the server starts.
 
 :CubridReloadSchema                                       *:CubridReloadSchema*
     Reload snapshots and report availability and stale state per document.

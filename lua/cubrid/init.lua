@@ -56,7 +56,7 @@ local function eligible(buf)
 end
 
 local function update(client)
-  client.notify('workspace/didChangeConfiguration', { settings = { cubrid = session.config.settings } })
+  client:notify('workspace/didChangeConfiguration', { settings = { cubrid = session.config.settings } })
 end
 
 local start
