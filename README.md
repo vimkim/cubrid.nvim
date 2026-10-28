@@ -23,9 +23,9 @@ require('cubrid').setup({
 })
 ```
 
-서버 경로를 생략하면 Neovim 프로세스의 `PATH`에서 `cubrid-language-server`를 찾습니다. `parser_worker`와 `runtime_prefix`는 함께 지정합니다. 지정하지 않으면 런타임 부재 진단이 표시되지만 키워드 자동 완성은 사용할 수 있습니다. 서버와 네이티브 런타임은 별도로 설치해야 합니다.
+서버 경로를 생략하면 Neovim 프로세스의 `PATH`에서 `cubrid-language-server`를 찾습니다. `parser_worker`와 `runtime_prefix`는 함께 지정합니다. 지정하지 않으면 런타임 부재 진단이 표시되지만 키워드 자동 완성은 사용할 수 있습니다. 서버와 네이티브 런타임은 별도로 설치해야 합니다. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요.
 
-`.sql` 파일도 사용하려면 `sql = true`를 설정하고 파일을 다시 엽니다. 기존 SQL 파일 형식은 기본적으로 유지됩니다. 삽입 모드에서 `CTRL-X CTRL-O`를 누르고 `CTRL-N`으로 항목을 선택한 다음 `CTRL-Y`로 적용합니다. CUBRID 클라이언트가 연결된 동안 플러그인이 버퍼의 `omnifunc`를 사용합니다. 연결이 끝나면 이전 값을 복원하며, 사용자가 바꾼 값은 유지합니다. 한 줄의 일반 텍스트 편집을 지원하며 지원하지 않는 완성 항목은 알림으로 표시합니다.
+`.sql` 파일도 사용하려면 `sql = true`를 설정하고 파일을 다시 엽니다. 기존 SQL 파일 형식은 기본적으로 유지됩니다. 삽입 모드에서 `CTRL-X CTRL-O`를 누르고 `CTRL-N`으로 항목을 선택한 다음 `CTRL-Y`로 적용합니다. CUBRID 클라이언트가 연결된 동안 플러그인이 버퍼의 `omnifunc`를 사용합니다. 연결이 끝나면 이전 값을 복원하며, 사용자가 바꾼 값은 유지합니다. CTRL-Y는 커서 뒤의 텍스트를 포함하여 지원하는 한 줄 편집의 전체 범위를 적용합니다. Space나 Escape로 메뉴를 닫으면 Neovim의 미리보기 접미사가 버퍼에 남을 수 있습니다. 여러 줄 편집과 그 밖의 지원하지 않는 완성 항목은 알림으로 표시하며 부분 메뉴를 열지 않습니다.
 
 ## 스키마와 명령
 

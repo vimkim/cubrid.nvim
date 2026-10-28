@@ -32,8 +32,10 @@ directory when the server starts.
 COMPLETION                                                *cubrid-completion*
 
 In Insert mode, press CTRL-X CTRL-O, select with CTRL-N, and accept with
-CTRL-Y. CTRL-E cancels. The plugin owns the buffer-local omnifunc while its
-CUBRID client is attached. On detach it restores the previous value only if
+CTRL-Y. CTRL-Y applies the full supported edit, including text after the
+cursor. CTRL-E cancels. Space or Escape can discard the menu while leaving a
+native preview suffix in the buffer. The plugin owns the buffer-local
+omnifunc while its CUBRID client is attached. On detach it restores the previous value only if
 the value still belongs to the plugin. Other completion clients keep their
 own handlers. The menu uses CUBRID server results only.
 

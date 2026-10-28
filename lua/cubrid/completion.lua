@@ -14,6 +14,13 @@ local function invalidate(slot)
     vim.schedule(function()
       if not slot.context and slot.generation == ctx.generation and vim.api.nvim_get_current_buf() == ctx.buf
         and vim.api.nvim_get_current_win() == ctx.win and vim.fn.pumvisible() == 1 then
+        local items = vim.fn.complete_info({ 'items' }).items
+        if #items == 0 then return end
+        for _, item in ipairs(items) do
+          local index = type(item.user_data) == 'string'
+            and item.user_data:match(('^cubrid:%d:%d:(%%d+)$'):format(slot.epoch, ctx.generation))
+          if not index or not ctx.choices[tonumber(index)] then return end
+        end
         vim.api.nvim_input('<C-E>')
       end
     end)
