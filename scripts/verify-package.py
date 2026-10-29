@@ -6,7 +6,7 @@ import sys
 import tarfile
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-INCLUDED = ('README.md', 'README.en.md', 'LICENSE', 'lua', 'ftplugin', 'indent', 'syntax', 'doc', 'tests')
+INCLUDED = ('README.md', 'README.en.md', 'LICENSE', 'lsp', 'lua', 'ftplugin', 'indent', 'syntax', 'doc', 'tests')
 
 
 def main():
