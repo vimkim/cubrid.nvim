@@ -283,3 +283,22 @@ CUBRID_TEST_DIR="$artifact_dir/profile" CUBRID_TEST_SERVER="$server" \
 ```
 
 `tests/run.sh` isolates XDG configuration, data, cache, and state. No GUI, real user-profile mutation, database connection, or SQL execution is part of these checks. The cleanup test observes direct children of Neovim. It does not claim general descendant-process cleanup. Lower Neovim versions, other operating systems, and full LazyVim distribution startup remain unverified. User root callbacks retain Neovim's asynchronous attachment behavior. Custom RPC-function commands cannot provide an executable identity for doctor. If users replace the shipped `before_init` or `on_exit`, they must chain the existing callback to retain settings preparation and failure reporting. The coordinator owns independent Blink LSP-only popup verification and integration review.
+
+## Independent packaged Blink and LazyVim verification
+
+The coordinator verified the final runtime files from product commit `12feab90dfaae8ce4ca49d45ed8dec6cc875dea7`, plus README example cleanup, against a separate installed engine wheel from product commit `8b1226c8f10686eb29d13d86cdda793df71d6645`. All 39 packaged files matched their source. The archive is `/home/vimkim/temp/cubrid-show-hints-606-yszqo6t9/evidence/artifacts/cubrid.nvim.tar.gz`, SHA-256 `15e8323c04ea07bef2cbd81660ada7b6482d4704a8c0e5299a04ab93c8c5c99f`.
+
+The installed artifact passed six real completion edits in default setup, explicit native activation, and an isolated LazyVim profile. Blink used only its ordinary LSP source. The cases verify SHOW, hint names after an emoji, bracketed and Unicode arguments, aliases after owner-qualified relations without a snapshot, and manual completion before an existing token. All accepted edits preserve the full token. The same runs checked exact UTF-16 A1001 ranges, correction clearing with U1002 retained, one actual client across buffers, the user attachment callback, and direct-child exit. The three successful runner logs and `delivery-results.json` record exit 0 and cleanup.
+
+The isolated LazyVim run uses installed plugin sources with separate XDG configuration, data, cache and state. It opens a real `.csql` file. Plugin updates, Mason and automatic parser installation are disabled in the successful run. The earlier disposable profile attempted parser downloads before that independent installer was disabled. Its data stayed in that profile's XDG data/site directory. No real user settings or plugin source files changed. This verifies the selected LazyVim integration rather than the full personal configuration. Neovim 0.12.5 on Linux remains the tested platform.
+
+The coordinator's reusable driver and saved results are in `/home/vimkim/temp/cubrid-show-hints-606-yszqo6t9/evidence/`. Repeat a mode with a fresh label:
+
+```sh
+python3 /home/vimkim/temp/cubrid-show-hints-606-yszqo6t9/evidence/run-editor-acceptance.py \
+  --mode lazyvim --label new-lazyvim-check
+```
+
+Use `default` or `external` for the other activation modes. The driver schedules the checks after startup so normal editor events can run. The independent review verified lifecycle and override cases and confirmed that the final engine boundary correction passed through the public API and framed LSP. Native coverage is unchanged, and authoring warnings do not certify complete SQL validity.
+
+The isolated integration used LazyVim commit `999700997f72227187d49d8b92667183dc7fc809` and Blink commit `78336bc89ee5365633bcf754d93df01678b5c08f`. Their source checkouts had no tracked changes after verification.

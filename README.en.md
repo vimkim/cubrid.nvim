@@ -73,9 +73,6 @@ require('cubrid').setup({ auto_start = false })
 vim.lsp.config('cubrid', {
   cmd = { '/absolute/path/to/cubrid-language-server' },
   settings = { cubrid = { schemaSnapshot = vim.NIL } },
-  on_attach = function(client, bufnr)
-    -- Add your buffer-local mappings here.
-  end,
 })
 vim.lsp.enable('cubrid')
 ```

@@ -73,9 +73,6 @@ require('cubrid').setup({ auto_start = false })
 vim.lsp.config('cubrid', {
   cmd = { '/absolute/path/to/cubrid-language-server' },
   settings = { cubrid = { schemaSnapshot = vim.NIL } },
-  on_attach = function(client, bufnr)
-    -- 버퍼별 키 매핑을 여기에 추가합니다.
-  end,
 })
 vim.lsp.enable('cubrid')
 ```
