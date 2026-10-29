@@ -135,4 +135,10 @@ CUBRID_TEST_SERVER=/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-langua
 
 Use fresh disposable directories on repetition. Output from the extracted package is `/tmp/cubrid-sql-artifact-final3/test.log`. The suite uses the existing read-only native worker and runtime. Only observed detection events and attached clients are reported; silent `noautocmd` overrides are outside the contract. Lower Neovim versions and other platforms were not tested.
 
+Independent review repeated `smoke.lua`, `sql-defaults.lua`, and `missing-default.lua` from the extracted package with a fresh profile under `/home/vimkim/temp/cubrid-nvim-sql-defaults-20261029/parent-tests`. All passed. Every extracted file matched its source counterpart. The archive SHA-256 is `dc1ca38e1e52f1067f13429f14c1c7da3b7bb7076674639443c8634ee2c30b87`.
+
+The personal Neovim configuration ticket is commit `30717568d603f9fe3358eaeacdfd89e242cab456`. A copied LazyVim profile loaded plugin commit `ac9cf68b7d910fa83eb883dccb7476de796a5d20` from its task checkout. Both extensions used `cubrid`, shared one initialized client, received `CUBRID-S1001`, and returned `SELECT` completion. Iron retained the `csql.sh` definition for both filetypes without invoking it. A manual `.sql` filetype change produced one WARN with the `sql=false` advice. The check and output are `/home/vimkim/temp/cubrid-nvim-sql-defaults-20261029/combined/headless.lua` and `headless.log` in that directory.
+
+This copied profile isolated writable state and disabled Tree-sitter and Mason to prevent unrelated automatic installations. Their interaction with the plugin is not established by this check. The scoped independent comment review found no issues. Main integration and activation in the live configuration remain separate from these pre-integration checks.
+
 The final archive SHA-256 is `dc1ca38e1e52f1067f13429f14c1c7da3b7bb7076674639443c8634ee2c30b87`. The archive contains README files, license, runtime files, help and tests. Historical `docs/design.md` and `docs/dispatch.md` describe the earlier alpha and are superseded for this ticket by the selected dispatch above.
