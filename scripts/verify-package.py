@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""Compare the package inventory and bytes with the tracked checkout."""
 import hashlib
 import pathlib
 import subprocess
