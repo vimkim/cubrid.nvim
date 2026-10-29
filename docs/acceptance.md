@@ -141,4 +141,10 @@ The personal Neovim configuration ticket is commit `30717568d603f9fe3358eaeacdfd
 
 This copied profile isolated writable state and disabled Tree-sitter and Mason to prevent unrelated automatic installations. Their interaction with the plugin is not established by this check. The scoped independent comment review found no issues. Main integration and activation in the live configuration remain separate from these pre-integration checks.
 
+## SQL defaults integration
+
+After explicit approval, both task branches rebased without changes and fast-forwarded into local `main`. The plugin tip was `0f60ec90e9d79799a565d307f7761a543c52b31f`, and the personal configuration tip was `30717568d603f9fe3358eaeacdfd89e242cab456`. Fresh pre-merge smoke, SQL conflict, missing-server recovery, and configuration checks passed.
+
+`bash /home/vimkim/temp/cubrid-nvim-sql-defaults-20261029/merge/live/run.sh` passed against the actual `/home/vimkim/.config/nvim/init.lua` and plugin module at `/home/vimkim/gh/cubrid.nvim/lua/cubrid/init.lua`. Both extensions received native diagnostics and `SELECT` completion through one initialized client. Iron retained both REPL definitions. An observed `.sql` filetype conflict produced one WARN with the opt-out advice. The script uses isolated data, cache, state, and lockfile paths and disables automatic plugin installation, Tree-sitter, and Mason. Its output is `headless.log` in that directory. The existing unrelated `lazyvim.json` edit retained its exact bytes and unstaged status after integration and startup. No remote publication was part of this approval.
+
 The final archive SHA-256 is `dc1ca38e1e52f1067f13429f14c1c7da3b7bb7076674639443c8634ee2c30b87`. The archive contains README files, license, runtime files, help and tests. Historical `docs/design.md` and `docs/dispatch.md` describe the earlier alpha and are superseded for this ticket by the selected dispatch above.
