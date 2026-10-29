@@ -30,7 +30,7 @@ run_case() {
   else
     set -- -l "$root/tests/$file"
   fi
-  if timeout 120s nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT); assert(vim.opt.runtimepath:get()[1] == vim.env.CUBRID_PLUGIN_ROOT)' "$@" > "$case_dir/stdout.log" 2> "$case_dir/stderr.log"; then
+  if timeout --kill-after=5s 120s nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT); assert(vim.opt.runtimepath:get()[1] == vim.env.CUBRID_PLUGIN_ROOT)' "$@" > "$case_dir/stdout.log" 2> "$case_dir/stderr.log"; then
     printf 'passed\n' > "$case_dir/result.txt"
   else
     status=$?

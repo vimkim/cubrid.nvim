@@ -13,7 +13,7 @@ for case in integration startup discovery-doctor doctor-display; do
   export CUBRID_TEST_DIR="$case_dir"
   export XDG_CONFIG_HOME="$case_dir/config" XDG_DATA_HOME="$case_dir/data" XDG_CACHE_HOME="$case_dir/cache" XDG_STATE_HOME="$case_dir/state"
   printf 'running native %s\n' "$case"
-  if timeout 120s nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/$case.lua" > "$case_dir/stdout.log" 2> "$case_dir/stderr.log"; then
+  if timeout --kill-after=5s 120s nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/$case.lua" > "$case_dir/stdout.log" 2> "$case_dir/stderr.log"; then
     printf 'passed\n' > "$case_dir/result.txt"
   else
     status=$?
