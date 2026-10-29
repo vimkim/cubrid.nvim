@@ -22,8 +22,8 @@ run_case() {
   mkdir "$case_dir/config" "$case_dir/data" "$case_dir/cache" "$case_dir/state"
   export CUBRID_TEST_DIR="$case_dir"
   export XDG_CONFIG_HOME="$case_dir/config" XDG_DATA_HOME="$case_dir/data" XDG_CACHE_HOME="$case_dir/cache" XDG_STATE_HOME="$case_dir/state"
-  export CUBRID_MENU_CASE= CUBRID_TEST_COMPLETION_FIXTURE=
-  case "$flag" in foreign|mixed|owned) export CUBRID_MENU_CASE="$flag" ;; fixture) export CUBRID_TEST_COMPLETION_FIXTURE=1 ;; esac
+  export CUBRID_MENU_CASE= CUBRID_TEST_COMPLETION_FIXTURE= CUBRID_NATIVE_CASE=
+  case "$flag" in foreign|mixed|owned) export CUBRID_MENU_CASE="$flag" ;; fixture) export CUBRID_TEST_COMPLETION_FIXTURE=1 ;; native|setup|optout) export CUBRID_NATIVE_CASE="$flag" ;; esac
   printf 'running %s\n' "$name"
   if [ "$form" = command ]; then
     set -- -c "execute 'luafile ' . fnameescape(\"$root/tests/$file\")"
@@ -40,6 +40,9 @@ run_case() {
     exit "$status"
   fi
 }
+run_case native-config-native lua native-config.lua native
+run_case native-config-setup lua native-config.lua setup
+run_case native-config-optout lua native-config.lua optout
 run_case smoke lua smoke.lua none
 run_case menu command menu.lua none
 run_case menu-foreign command menu-foreign.lua foreign
