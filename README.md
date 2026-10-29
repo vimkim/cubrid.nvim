@@ -62,18 +62,66 @@ tar -xzf cubrid.nvim-alpha.tar.gz -C ~/.local/share/nvim/site/pack/local/start/c
 
 Neovim을 시작하고 `:helptags ALL`을 실행하여 도움말을 색인합니다. 위 안내에 따라 신뢰하는 사용자 Lua에서 플러그인을 설정하세요.
 
-Lazy.nvim에서 로컬 설치를 사용할 수도 있습니다. 경로를 실제 위치로 바꾸세요.
+## Neovim 기본 LSP 설정 사용
+
+`setup()`은 함께 제공하는 `lsp/cubrid.lua` 설정을 활성화합니다. Neovim이 연결과 서버 프로세스를 관리합니다. `vim.lsp.enable('cubrid')`를 다시 호출해도 기본 클라이언트를 재사용합니다. nvim-lspconfig나 Blink는 필수 의존성이 아닙니다.
+
+직접 활성화하려면 파일을 열기 전에 신뢰하는 사용자 Lua 설정에 다음 코드를 추가하세요.
 
 ```lua
-{
-  dir = '/absolute/path/to/cubrid.nvim',
-  lazy = false,
-  config = function() require('cubrid').setup({ file_extensions = { '.sql', '.csql' } }) end,
+require('cubrid').setup({ auto_start = false })
+vim.lsp.config('cubrid', {
+  cmd = { '/absolute/path/to/cubrid-language-server' },
+  settings = { cubrid = { schemaSnapshot = vim.NIL } },
+  on_attach = function(client, bufnr)
+    -- 버퍼별 키 매핑을 여기에 추가합니다.
+  end,
+})
+vim.lsp.enable('cubrid')
+```
+
+`auto_start = false`는 자동 활성화를 생략합니다. 외부에서 활성화한 설정이나 실행 중인 클라이언트를 끄지는 않습니다. 중지하려면 `vim.lsp.enable('cubrid', false)`를 호출하세요. `:CubridRestart`는 기존 클라이언트를 중지한 뒤 설정을 다시 활성화합니다.
+
+`setup()` 없이도 `cubrid` 파일 형식인 버퍼에서 `vim.lsp.enable('cubrid')`를 사용할 수 있습니다. 직접 파일 형식 규칙을 추가하거나 `:setfiletype cubrid`를 실행하세요. 확장자의 자동 연결은 `setup()`이 설정합니다.
+
+`cmd`, `capabilities`, `on_attach`, `settings`는 `setup()` 전후 어느 쪽에서든 기본 LSP API로 지정할 수 있습니다. 활성화하거나 CUBRID 버퍼를 열기 전에 지정하세요. 기본 LSP 설정 변경은 새 클라이언트에 적용되므로 실행 중인 서버에는 `:CubridRestart`로 반영합니다. Neovim의 병합 순서에 따라 `vim.lsp.config('cubrid', ...)`가 런타임 설정과 `vim.lsp.config('*', ...)`보다 우선합니다. 나중의 기본 LSP 설정 호출은 앞선 호출과 병합됩니다.
+
+서버별 `settings.cubrid` 값은 해당 Lua setup 옵션보다 우선합니다. `setup()`을 다시 호출하면 생략한 setup 옵션은 제거되지만 기본 LSP API에서 지정한 값은 유지됩니다. 초기화 옵션과 이후 설정 알림에는 유효한 CUBRID 설정 전체를 보냅니다.
+
+플러그인의 `before_init`은 설정을 준비하고 `on_exit`는 실패를 알립니다. 둘 중 하나를 재정의할 때는 기존 콜백도 호출하세요. `on_attach`는 사용자 키 매핑에 사용할 수 있습니다. 수동 완성 기능은 별도의 연결 이벤트로 관리합니다.
+
+기본 루트는 최초 setup 또는 기본 LSP 설정 로드 시점의 작업 디렉터리입니다. 디렉터리를 바꿔도 클라이언트 하나를 유지합니다. `root_dir` 또는 루트 콜백을 직접 지정하면 루트별 클라이언트를 사용할 수 있습니다. 이 경우 `:CubridReloadSchema`는 현재 버퍼의 클라이언트를 사용하고 `:CubridRestart`는 CUBRID 클라이언트를 모두 다시 시작합니다.
+
+## LazyVim과 Blink 사용
+
+`lua/plugins/cubrid.lua`에 로컬 플러그인 설정을 추가하고 체크아웃 경로를 실제 위치로 바꾸세요. LazyVim의 기존 LSP 설정과 완성 기능을 사용합니다.
+
+```lua
+return {
+  {
+    dir = '/absolute/path/to/cubrid.nvim',
+    lazy = false,
+    opts = { auto_start = false },
+  },
+  {
+    'neovim/nvim-lspconfig',
+    opts = {
+      servers = {
+        cubrid = { mason = false },
+      },
+    },
+  },
 }
 ```
+
+LazyVim이 `cubrid`를 설정하고 활성화합니다. `mason = false`는 별도로 설치한 서버를 사용하게 합니다. 별도의 `vim.lsp.start()` 호출을 추가하지 마세요. 기본 LSP 옵션은 `servers.cubrid` 아래에 지정합니다. Blink는 일반 `lsp` 소스를 사용하며 CUBRID 전용 완성 소스가 필요하지 않습니다. LazyVim 외부에서는 `require('blink.cmp').get_lsp_capabilities()`를 기본 LSP의 `capabilities`에 전달할 수 있습니다. `CTRL-X CTRL-O` 수동 완성도 계속 사용할 수 있습니다.
+
+SHOW와 힌트 작성 지원이 포함된 공유 서버는 SHOW 명령, 옵티마이저 힌트, `CUBRID-A` 작성 경고를 제공합니다. 플러그인은 서버 결과를 전달합니다. 작성 경고를 수정해도 네이티브 검증 범위 밖이라는 경고는 남을 수 있습니다. 진단이 없다는 사실이 모든 SQL의 유효성을 보장하지는 않습니다.
+
+이 플러그인 테스트는 Linux의 Neovim 0.12.5에서 실행했습니다. 이전 버전과 LazyVim 배포판 전체의 시작 과정은 검증하지 않았습니다. 설치 아티팩트와 별도 완성 검증 결과는 [인수 증거](docs/acceptance.md)를 참조하세요.
 
 ## 스키마와 명령
 
 `schema_snapshot`을 생략하면 각 파일의 프로젝트 설정에서 스냅샷을 찾습니다. 절대 경로를 지정하면 모든 파일에 적용합니다. `vim.NIL`은 스키마를 비활성화합니다. `:CubridReloadSchema`는 스냅샷을 다시 읽고 파일별 결과와 오래된 데이터 상태를 알립니다. `:CubridRestart`는 서버를 다시 시작합니다. `setup`을 다시 호출할 때는 유지할 옵션을 모두 전달합니다.
 
-서버 하나가 여러 디렉터리의 파일을 처리합니다. 각 파일의 프로젝트 메타데이터는 서버가 따로 찾습니다. Neovim 0.12.5의 이름 없는 버퍼 URI는 `file://`입니다. 현재 서버는 시작 디렉터리의 상위 디렉터리부터 프로젝트 메타데이터를 찾습니다. 자세한 설정과 제한은 `:help cubrid`를 참조하세요.
+기본 설정에서는 서버 하나가 여러 디렉터리의 파일을 처리합니다. 각 파일의 프로젝트 메타데이터는 서버가 따로 찾습니다. Neovim 0.12.5의 이름 없는 버퍼 URI는 `file://`입니다. 현재 서버는 기본 초기화 루트의 상위 디렉터리부터 프로젝트 메타데이터를 찾습니다. 자세한 설정과 제한은 `:help cubrid`를 참조하세요.

@@ -22,7 +22,7 @@ function M.run(resolved, session)
   settings.scriptMode = 'sql'
   settings.workerTimeout = math.min(settings.workerTimeout or 3, 3)
   local done, exited, seen = false, false, nil
-  local started, id = pcall(vim.lsp.start, { name = 'cubrid-doctor', cmd = { resolved.server }, root_dir = root,
+  local started, id = pcall(vim.lsp.start, { name = 'cubrid-doctor', cmd = resolved.cmd or { resolved.server }, root_dir = root,
     exit_timeout = 500, get_language_id = function() return 'cubrid' end, init_options = { cubrid = settings },
     on_init = function(client) client:notify('workspace/didChangeConfiguration', { settings = { cubrid = settings } }) end,
     on_exit = function(code) exited = code; done = true end,

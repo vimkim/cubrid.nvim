@@ -6,7 +6,7 @@ mkdir -p "$testroot"
 testroot=$(CDPATH= cd -- "$testroot" && pwd)
 CUBRID_TEST_DIR="$testroot/portable" "$root/tests/run-portable.sh"
 export CUBRID_PLUGIN_ROOT="$root"
-for case in integration startup discovery-doctor doctor-display; do
+for case in native-settings show-hints integration startup discovery-doctor doctor-display; do
   case_dir="$testroot/native-$case"
   mkdir "$case_dir"
   mkdir "$case_dir/config" "$case_dir/data" "$case_dir/cache" "$case_dir/state"

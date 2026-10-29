@@ -43,6 +43,7 @@ run_case() {
 run_case native-config-native lua native-config.lua native
 run_case native-config-setup lua native-config.lua setup
 run_case native-config-optout lua native-config.lua optout
+run_case native-roots lua native-roots.lua none
 run_case smoke lua smoke.lua none
 run_case menu command menu.lua none
 run_case menu-foreign command menu-foreign.lua foreign

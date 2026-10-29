@@ -22,6 +22,10 @@ Call require('cubrid').setup(options) from trusted user Lua before opening a
 file. Each call replaces all previous options. Unknown or invalid options
 raise an error and leave the last valid settings in effect.
 
+auto_start        Boolean. Default true enables vim.lsp.config.cubrid through
+                  vim.lsp.enable(). false leaves activation to native user or
+                  LazyVim configuration. It does not stop an existing client
+                  or disable an externally enabled configuration.
 server_path       Absolute server executable. Omit to use
                   cubrid-language-server on the editor host's PATH.
 file_extensions   Dense list of exact suffixes ".sql" and ".csql". Default
@@ -50,12 +54,60 @@ The plugin warns about observed conflicting filetypes and attached foreign LSP
 clients. It does not change their state. If the server is missing, install it
 on Neovim PATH or set server_path, then run :CubridRestart.
 
-Explicit executable paths come only from this Lua configuration. The plugin
-starts one server using an argv array and shares it across CUBRID buffers.
+Executable selection comes only from trusted setup or native Lua configuration.
+Neovim owns activation and server processes. The default configuration shares
+one stable-root client across CUBRID buffers.
 The server discovers metadata independently for each file. On Neovim 0.12.5,
 an unnamed buffer uses URI file://. The current server searches for its
 metadata from the parent of the initialize root, which is the editor current
-directory when the server starts.
+directory at the first setup or native configuration load.
+
+NATIVE LSP                                                   *cubrid-native*
+
+The package includes lsp/cubrid.lua. nvim-lspconfig and Blink are optional.
+For explicit activation, configure the plugin before opening files: >lua
+    require('cubrid').setup({ auto_start = false })
+    vim.lsp.config('cubrid', {
+      cmd = { '/absolute/path/to/cubrid-language-server' },
+      settings = { cubrid = { schemaSnapshot = vim.NIL } },
+    })
+    vim.lsp.enable('cubrid')
+<
+Without setup(), native enable also works for buffers whose filetype is already
+cubrid. Supply your own detection or use :setfiletype cubrid. Calling native
+enable after ordinary setup reuses the same default client. To stop clients
+and disable automatic activation, call vim.lsp.enable('cubrid', false).
+
+Native cmd, capabilities, on_attach, and settings overrides work before or
+after setup(). Set them before activation. Existing clients require
+:CubridRestart after native config changes. Neovim merges global '*' options,
+runtime configuration, then server-specific vim.lsp.config('cubrid', ...) values.
+Later native config calls merge into earlier calls. settings.cubrid overrides
+matching setup options. setup() replaces its own options completely and keeps
+native overrides. Initialization and configuration updates send complete
+effective settings. Changes during startup apply when initialization completes.
+
+before_init prepares those settings. on_exit reports failed sessions. If you
+replace either callback, chain the shipped callback. Manual completion uses
+LspAttach and LspDetach independently of your on_attach callback.
+
+The default root remains fixed when the working directory changes. A native
+root_dir override can create separate clients per root. With multiple clients,
+:CubridReloadSchema uses the current buffer's client. :CubridRestart restarts
+all CUBRID clients. User root callbacks retain native asynchronous attachment.
+
+For LazyVim, load this local plugin with lazy=false and
+opts={auto_start=false}. Add servers.cubrid={mason=false} to LazyVim's
+neovim/nvim-lspconfig opts. Put native overrides under servers.cubrid. LazyVim
+then configures and enables the server through the native manager. Do not add
+a manual vim.lsp.start() call. The READMEs contain the complete plugin spec.
+Blink uses its ordinary lsp source. Outside LazyVim, Blink users may pass
+require('blink.cmp').get_lsp_capabilities() as native capabilities.
+
+The plugin suite tests Linux with Neovim 0.12.5. Earlier versions and full
+LazyVim distribution startup are unverified. A custom cmd RPC function can
+start a client, but doctor cannot infer its transport or executable. A command
+argv list allows doctor to probe the selected command.
 
 COMPLETION                                                *cubrid-completion*
 
@@ -88,8 +140,14 @@ buffer text and does not claim that the server edit was applied.
     require('cubrid').doctor() returns a report table for headless use.
 
 :CubridRestart                                                 *:CubridRestart*
-    Stop and restart the owned language server. Use this command to retry a
-    missing or failed server. A changed server_path also triggers a restart.
+    Stop CUBRID clients and enable the native configuration again. Use this
+    command to retry a missing or failed server. A changed server_path also
+    restarts an enabled configuration.
+
+A server with SHOW/hint support supplies SHOW commands, optimizer hints, and
+CUBRID-A authoring warnings. The plugin forwards these results without a
+local parser. Correcting an authoring warning can leave unsupported coverage
+unchanged.
 
 The native server reports unsupported coverage and runtime failures as
 diagnostics. An empty diagnostic list does not certify all SQL. Highlighting

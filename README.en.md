@@ -62,18 +62,64 @@ tar -xzf cubrid.nvim-alpha.tar.gz -C ~/.local/share/nvim/site/pack/local/start/c
 
 Start Neovim and run `:helptags ALL` to index the help. Configure the plugin in trusted user Lua as described above.
 
-You can also use a local installation with lazy.nvim. Replace the path with your installation path.
+## Use native LSP configuration
+
+`setup()` enables the shipped `lsp/cubrid.lua` configuration. Neovim owns activation and server processes. Calling `vim.lsp.enable('cubrid')` again reuses the same default client. Neither nvim-lspconfig nor Blink is required.
+
+To let native configuration control activation, use this trusted user configuration before opening files:
 
 ```lua
-{
-  dir = '/absolute/path/to/cubrid.nvim',
-  lazy = false,
-  config = function() require('cubrid').setup({ file_extensions = { '.sql', '.csql' } }) end,
+require('cubrid').setup({ auto_start = false })
+vim.lsp.config('cubrid', {
+  cmd = { '/absolute/path/to/cubrid-language-server' },
+  settings = { cubrid = { schemaSnapshot = vim.NIL } },
+  on_attach = function(client, bufnr)
+    -- Add your buffer-local mappings here.
+  end,
+})
+vim.lsp.enable('cubrid')
+```
+
+`auto_start = false` skips automatic enable. It does not disable an externally enabled configuration or stop an existing client. Use `vim.lsp.enable('cubrid', false)` to disable it. `:CubridRestart` explicitly enables the configuration again after stopping its clients.
+
+Without `setup()`, `vim.lsp.enable('cubrid')` also works for buffers already marked `cubrid`. Add your own filetype rule or use `:setfiletype cubrid`. Automatic extension selection belongs to `setup()`.
+
+Native `cmd`, `capabilities`, `on_attach`, and `settings` overrides work whether configured before or after `setup()`. Set them before enabling or opening a CUBRID buffer. Changes to native configuration affect new clients; run `:CubridRestart` to apply them to a running client. Native configuration uses Neovim's merge order, with `vim.lsp.config('cubrid', ...)` above runtime configuration and `vim.lsp.config('*', ...)`. Later native calls merge into earlier calls. A server-specific `settings.cubrid` value overrides the corresponding trusted setup option. Omitted setup options are removed on each `setup()` call; native overrides remain. Both initialization options and subsequent settings notifications contain the complete effective CUBRID settings.
+
+The plugin uses `before_init` to prepare those settings and `on_exit` to report failure. If you replace either callback, chain the existing callback. `on_attach` is free for your mappings; manual completion uses separate attachment events.
+
+The default root is the working directory at the first setup or native configuration load. Changing directories keeps one client. An explicit `root_dir` or root callback can create clients for separate roots. With multiple clients, `:CubridReloadSchema` uses the current buffer's client, and `:CubridRestart` restarts all enabled CUBRID clients.
+
+## Use LazyVim and Blink
+
+Add a local plugin specification under `lua/plugins/cubrid.lua`. Replace the checkout path. This uses LazyVim's existing LSP configuration and completion integration:
+
+```lua
+return {
+  {
+    dir = '/absolute/path/to/cubrid.nvim',
+    lazy = false,
+    opts = { auto_start = false },
+  },
+  {
+    'neovim/nvim-lspconfig',
+    opts = {
+      servers = {
+        cubrid = { mason = false },
+      },
+    },
+  },
 }
 ```
+
+LazyVim configures and enables `cubrid`. `mason = false` keeps installation external. Do not add a second manual `vim.lsp.start()` call. Put native overrides under `servers.cubrid`. Blink uses its ordinary `lsp` source; no CUBRID-specific completion source is needed. Outside LazyVim, Blink users can pass `require('blink.cmp').get_lsp_capabilities()` as the native `capabilities` option. The manual `CTRL-X CTRL-O` menu remains available.
+
+A shared server with SHOW/hint authoring support supplies SHOW commands, optimizer hints, and `CUBRID-A` authoring warnings. The plugin forwards these results. An unsupported-coverage warning can remain after an authoring warning is corrected. An empty diagnostic list does not establish complete native SQL coverage.
+
+Only Neovim 0.12.5 on Linux was exercised here. Earlier versions and full LazyVim distribution startup are not verified by the plugin suite. See [acceptance evidence](docs/acceptance.md) for the installed artifact checks and independent completion verification.
 
 ## Schema and commands
 
 Omit `schema_snapshot` to inherit project metadata for each file. An absolute path selects a snapshot for every file. `vim.NIL` disables schema metadata. `:CubridReloadSchema` reloads snapshots and reports each document's availability and stale state. `:CubridRestart` restarts the server. Each `setup` call replaces the previous options, so include every option you want to retain.
 
-One server handles files in multiple directories and discovers project metadata per file. On Neovim 0.12.5, an unnamed buffer uses `file://`; the current server searches for its project metadata from the parent of the server's starting directory. See `:help cubrid` for options and limits.
+By default, one server handles files in multiple directories and discovers project metadata per file. On Neovim 0.12.5, an unnamed buffer uses `file://`; the current server searches for its project metadata from the parent of the default initialize root. See `:help cubrid` for options and limits.

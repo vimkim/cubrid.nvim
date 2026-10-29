@@ -247,3 +247,39 @@ CUBRID_TEST_SERVER=/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-langua
 CUBRID_TEST_NVIM_VERSION=0.12.5 CUBRID_TEST_DIR=/absolute/fresh/output \
   /absolute/extracted/plugin/tests/run.sh
 ```
+
+## Standard native LSP configuration and SHOW/hint authoring
+
+The bounded ticket starts at dispatch `e8656a8865657df2d88c3895f60e17a833539cd7` on `feat/standard-lsp-config` in `/home/vimkim/gh/cubrid.nvim-standard-lsp`. The shared engine remains read-only for this consumer ticket. The final integration server is `/home/vimkim/gh/cubrid-language-tools-show-hints/.venv/bin/cubrid-language-server`, engine commit `38733ed3485b9065802bc768c19e3e03af60c88a`. Native checks use `/home/vimkim/gh/cubrid-language-tools/native/parser-worker/build/parser-worker` and `/home/vimkim/.cub/install/develop/debug` without changing either input.
+
+Commit `e13f319` records the failing public headless regression before production edits. Its three isolated runs fail because `lsp/cubrid.lua` is missing, setup plus native enable creates competing clients, and `auto_start` is rejected. Logs are `/home/vimkim/temp/cubrid-standard-lsp-evidence/red-native.log`, `red-setup.log`, and `red-optout.log`. The coordinator independently reproduced these failures.
+
+The implementation removes the manually started CUBRID session. The native manager owns activation, attachment, and process shutdown. `setup()` enables the native configuration by default. `auto_start=false` leaves activation external. The default root stays fixed, while explicit native root callbacks may create separate clients. Completion hooks use editor events so a user `on_attach` remains effective. The dedicated doctor probe remains separate from ordinary buffer activation.
+
+The focused acceptance checks exercise these behaviors through real Neovim and the real server:
+
+- `tests/native-config.lua` covers configuration without setup, ordinary setup plus explicit enable, opt-out, invalid opt-out validation, native command/capability/callback/settings overrides, one client across a directory change, repeated enable, actual schema responses, and native disable. Its final assertion includes clients still initializing, after both documents and a real server response.
+- `tests/native-settings.lua` uses `tests/record-server.py` to record and forward actual framed traffic. It holds initialization until the test replaces setup options. The initialize message contains complete settings and the native capability override. The first configuration notification contains the newest settings, without removed snapshot and timeout fields. A running replacement removes the native pair, and actual diagnostics change from `CUBRID-S1001` to `CUBRID-T1001`.
+- `tests/native-roots.lua` observes two clients only after an explicit root callback selects distinct directories. Restart replaces both clients, and native disable stops both.
+- `tests/show-hints.lua` applies real SHOW and hint completion edits, including a hint token after an emoji. It checks `CUBRID-A1001` warning severity/category and exact UTF-16 range 17 through 22 for `BOGUS`. Correcting the hint clears the authoring warning while `CUBRID-U1002` remains. A clean supported statement clears diagnostics, and closing a warning-bearing document clears its diagnostics.
+- The existing full suite continues to cover lexical support, extension selection, all manual completion/menu ownership cases, discovery/doctor success and failure, missing runtime/server recovery, schema replacement and reload, startup/restart races, per-document metadata, Unicode/CRLF edits, foreign-client preservation, and owned direct-child exit.
+
+The source suite passed on Linux with Neovim 0.12.5 and LuaJIT 2.1.1788856981. Its isolated test directory is `/home/vimkim/temp/cubrid-standard-final-source-GZlaky`, and its output is `/home/vimkim/temp/cubrid-standard-lsp-evidence/full-green.log`. The final artifact adds an invalid-option assertion and a post-response client-count assertion to the same native regression.
+
+The extracted artifact suite passed with a separate profile under `/home/vimkim/temp/cubrid-standard-artifact-aWXZq9`. The archive is `cubrid.nvim.tar.gz`, the extracted plugin is `extracted/`, and the profile is `profile/`. Its complete file inventory is `inventory.txt`. The archive contains `lsp/cubrid.lua`, both READMEs, help, all runtime modules, and executable headless tests. Its SHA-256 is `cd70fef0f664fc19f956ade6f811a1ad59f5371b4c07f81593e47a3b114778ee`. Output is `/home/vimkim/temp/cubrid-standard-lsp-evidence/artifact-green.log`. The wire capture is `profile/native-settings-wire.jsonl` in the artifact directory.
+
+To repeat the checks, choose new disposable directories:
+
+```sh
+server=/home/vimkim/gh/cubrid-language-tools-show-hints/.venv/bin/cubrid-language-server
+source_profile=$(mktemp -d)
+CUBRID_TEST_DIR="$source_profile" CUBRID_TEST_SERVER="$server" sh tests/run.sh
+artifact_dir=$(mktemp -d)
+sh scripts/package.sh "$artifact_dir/cubrid.nvim.tar.gz"
+mkdir "$artifact_dir/extracted"
+tar -xzf "$artifact_dir/cubrid.nvim.tar.gz" -C "$artifact_dir/extracted"
+CUBRID_TEST_DIR="$artifact_dir/profile" CUBRID_TEST_SERVER="$server" \
+  sh "$artifact_dir/extracted/tests/run.sh"
+```
+
+`tests/run.sh` isolates XDG configuration, data, cache, and state. No GUI, real user-profile mutation, database connection, or SQL execution is part of these checks. The cleanup test observes direct children of Neovim. It does not claim general descendant-process cleanup. Lower Neovim versions, other operating systems, and full LazyVim distribution startup remain unverified. User root callbacks retain Neovim's asynchronous attachment behavior. Custom RPC-function commands cannot provide an executable identity for doctor. If users replace the shipped `before_init` or `on_exit`, they must chain the existing callback to retain settings preparation and failure reporting. The coordinator owns independent Blink LSP-only popup verification and integration review.

@@ -18,6 +18,7 @@ if mode == 'setup' then
   require('cubrid').setup({ server_path = server })
 elseif mode == 'optout' then
   require('cubrid').setup({ auto_start = false })
+  assert(not pcall(require('cubrid').setup, { auto_start = 'false' }), 'invalid activation option is rejected')
 end
 vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/' .. mode .. '.csql'))
 vim.bo.filetype = 'cubrid'
@@ -49,6 +50,8 @@ client:request('workspace/executeCommand', { command = 'cubrid.reloadSchema', ar
 end)
 wait(function() return result ~= nil end, 'configured server responds to real LSP requests')
 assert(#result == 2 and not result[1].schemaAvailable and not result[2].schemaAvailable, 'settings disable schema for both documents')
+assert(#vim.lsp.get_clients({ name = 'cubrid', _uninitialized = true }) == 1,
+  'one client remains after both documents and a real server response, including clients still starting')
 vim.lsp.enable('cubrid', false)
 wait(function() return #clients() == 0 end, 'native disable stops the owned client')
 print('PASS native configuration ' .. mode)

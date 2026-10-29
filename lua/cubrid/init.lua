@@ -1,9 +1,9 @@
 local M = {}
 local completion = require('cubrid.completion')
 local environment = require('cubrid.environment')
-local session = { phase = 'idle', buffers = {}, warned = {} }
+local session = { warned = {} }
 local keys = {
-  server_path = true, file_extensions = true, parser_worker = true, runtime_prefix = true,
+  server_path = true, file_extensions = true, auto_start = true, parser_worker = true, runtime_prefix = true,
   worker_manifest = true, worker_timeout = true, profile = true, script_mode = true,
   config_path = true, schema_snapshot = true,
 }
@@ -21,6 +21,7 @@ local function parse(options)
   for key in pairs(options) do
     if not keys[key] then error('unknown cubrid option: ' .. tostring(key), 3) end
   end
+  if options.auto_start ~= nil and type(options.auto_start) ~= 'boolean' then error('auto_start must be a boolean', 3) end
   local extensions = options.file_extensions
   if extensions == nil then extensions = { '.sql', '.csql' } end
   if type(extensions) ~= 'table' or not vim.islist(extensions) then error('file_extensions must be a dense list of .sql and .csql', 3) end
@@ -30,7 +31,7 @@ local function parse(options)
     if selected[suffix] then error('file_extensions contains a duplicate: ' .. suffix, 3) end
     selected[suffix] = true
   end
-  local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', file_extensions = selected, settings = vim.empty_dict() }
+  local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', file_extensions = selected, auto_start = options.auto_start ~= false, settings = vim.empty_dict() }
   local values = result.settings
   if options.parser_worker ~= nil or options.runtime_prefix ~= nil then
     values.parserWorker = absolute(options.parser_worker, 'parser_worker')
@@ -93,7 +94,7 @@ local function inspect_clients(buf)
   vim.schedule(function()
     if not session.config or not eligible(buf) then return end
     for _, client in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
-      if client.id ~= session.client then
+      if client.name ~= 'cubrid' then
         local name = vim.api.nvim_buf_get_name(buf)
         local advice = ' To disable automatic association, exclude its suffix from file_extensions and reopen the file.'
         warn_once(buf, 'client:' .. client.id, 'LSP client ' .. client.name .. ' (id ' .. client.id .. ') is attached to ' .. name .. ' and may overlap completion or diagnostics. Choose one server.' .. advice)
@@ -102,91 +103,62 @@ local function inspect_clients(buf)
   end)
 end
 
+local function clients()
+  return vim.lsp.get_clients({ name = 'cubrid', _uninitialized = true })
+end
+
+local default_cmd
+local function resolve(config, server)
+  local trusted = session.config or parse({})
+  local command = config and config.cmd
+  local selected = server or (type(command) == 'table' and command[1]) or trusted.server
+  local settings = vim.tbl_deep_extend('force', vim.empty_dict(), trusted.settings,
+    (config and config.init_options and config.init_options.cubrid) or {},
+    (config and config.settings and config.settings.cubrid) or {})
+  local resolved = environment.resolve({ server = selected, settings = settings })
+  if command and command ~= default_cmd then resolved.server_source = 'vim.lsp.config' end
+  if type(command) == 'table' then resolved.cmd = vim.deepcopy(command) end
+  return resolved
+end
+
 local function update(client)
-  local config = vim.deepcopy(session.config)
-  config.server = session.active.server
-  local resolved = environment.resolve(config)
-  resolved.server_source = session.active.server_source
-  session.active = resolved
-  client:notify('workspace/didChangeConfiguration', { settings = { cubrid = resolved.settings } })
-end
-
-local start
-local function attach_all(client)
-  for buf in pairs(session.buffers) do
-    if eligible(buf) then completion.prepare(buf); vim.lsp.buf_attach_client(buf, client.id) else session.buffers[buf] = nil end
-  end
-end
-
-start = function()
-  if session.phase ~= 'idle' or not next(session.buffers) then return end
-  local config = environment.resolve(session.config)
-  session.active = config
-  if vim.fn.executable(config.server) ~= 1 then
-    session.phase = 'failed'
-    notice('language server is not executable: ' .. config.server .. '. Install cubrid-language-server on Neovim PATH or set trusted server_path, then run :CubridRestart', vim.log.levels.ERROR)
-    return
-  end
-  session.phase = 'starting'
-  local first = next(session.buffers)
-  completion.prepare(first)
-  local id = vim.lsp.start({
-    name = 'cubrid', cmd = { config.server }, root_dir = vim.uv.cwd(), exit_timeout = 2000,
-    init_options = { cubrid = config.settings },
-    on_attach = function(client, buf) completion.attach(buf, client) end,
-    on_init = function(client)
-      if session.phase ~= 'starting' then return end
-      session.phase = 'running'
-      update(client)
-      attach_all(client)
-    end,
-    on_exit = function(code, _, client_id)
-      vim.schedule(function()
-        if session.client ~= client_id then return end
-        for buf in pairs(session.buffers) do completion.detach(buf) end
-        session.client = nil
-        if session.phase == 'disposed' then
-          return
-        elseif session.phase == 'stopping' then
-          session.phase = 'idle'
-          start()
-        else
-          session.phase = 'failed'
-          notice('language server exited with code ' .. code .. '; use :CubridRestart to retry', vim.log.levels.ERROR)
-        end
-      end)
-    end,
-  }, { bufnr = first, reuse_client = function() return false end })
-  if id then session.client = id else session.phase = 'failed'; notice('could not start language server', vim.log.levels.ERROR) end
-end
-
-local function attach(buf)
-  if not session.config or not eligible(buf) then return end
-  session.buffers[buf] = true
-  inspect_clients(buf)
-  if session.phase == 'idle' then start()
-  elseif session.phase == 'running' or session.phase == 'starting' then
-    local client = vim.lsp.get_client_by_id(session.client)
-    if client then completion.prepare(buf); vim.lsp.buf_attach_client(buf, client.id) end
+  local previous = client.config._cubrid_active
+  local config = vim.lsp.config.cubrid
+  local resolved = resolve(config, previous and previous.server)
+  if previous then resolved.server_source = previous.server_source end
+  client.config._cubrid_active = resolved
+  client.settings = vim.deepcopy(config.settings or {})
+  client.settings.cubrid = resolved.settings
+  client.config.settings = client.settings
+  client.config.init_options = vim.deepcopy(config.init_options or {})
+  client.config.init_options.cubrid = vim.deepcopy(resolved.settings)
+  if client.initialized then
+    client:notify('workspace/didChangeConfiguration', { settings = client.settings })
   end
 end
 
 function M.restart()
-  if session.phase == 'stopping' then return end
-  local client = session.client and vim.lsp.get_client_by_id(session.client)
-  if client then
-    session.phase = 'stopping'
-    for buf in pairs(session.buffers) do completion.detach(buf, client.id) end
-    client:stop()
-  else
-    session.phase = 'idle'
-    start()
+  if session.restarting then return end
+  session.restarting = true
+  session.failed = nil
+  local owned = clients()
+  vim.lsp.enable('cubrid', false)
+  for _, client in ipairs(owned) do
+    for buf in pairs(client.attached_buffers) do completion.detach(buf, client.id) end
+    if not client.initialized then client:stop(2000) end
   end
+  local function resume()
+    if #clients() > 0 then vim.defer_fn(resume, 20); return end
+    session.restarting = nil
+    if vim.v.exiting == vim.NIL then vim.lsp.enable('cubrid') end
+  end
+  vim.schedule(resume)
 end
 
 function M.reload_schema(callback)
-  local client = session.client and vim.lsp.get_client_by_id(session.client)
-  if not client or session.phase ~= 'running' then
+  local attached = vim.lsp.get_clients({ name = 'cubrid', bufnr = 0 })
+  local client = attached[1] or vim.lsp.get_clients({ name = 'cubrid' })[1]
+  if not client then
     notice('language server is not running', vim.log.levels.ERROR)
     return
   end
@@ -197,50 +169,104 @@ function M.reload_schema(callback)
   end)
 end
 
+local function register()
+  if session.registered then return end
+  session.registered = true
+  session.root = vim.uv.cwd()
+  local group = vim.api.nvim_create_augroup('cubrid', { clear = true })
+  vim.api.nvim_create_autocmd('FileType', { group = group, callback = function(args)
+    inspect_filetype(args.buf)
+    if eligible(args.buf) then completion.prepare(args.buf) else completion.detach(args.buf) end
+  end })
+  vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, { group = group, callback = function(args) inspect_filetype(args.buf) end })
+  vim.api.nvim_create_autocmd('LspAttach', { group = group, callback = function(args)
+    local client = vim.lsp.get_client_by_id(args.data.client_id)
+    if client and client.name == 'cubrid' then completion.attach(args.buf, client) end
+    inspect_clients(args.buf)
+  end })
+  vim.api.nvim_create_autocmd('BufWipeout', { group = group, callback = function(args) session.warned[args.buf] = nil end })
+  vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) completion.detach(args.buf) end })
+  vim.api.nvim_create_autocmd('LspDetach', { group = group, callback = function(args) completion.detach(args.buf, args.data.client_id) end })
+  vim.api.nvim_create_user_command('CubridReloadSchema', function() M.reload_schema() end, {})
+  vim.api.nvim_create_user_command('CubridRestart', function() M.restart() end, {})
+  vim.api.nvim_create_user_command('CubridDoctor', function() vim.notify(require('cubrid.doctor').format(M.doctor())) end, {})
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do if eligible(buf) then completion.prepare(buf) end end
+end
+
+default_cmd = function(dispatchers, config)
+  local resolved = resolve(config)
+  config._cubrid_active = resolved
+  return vim.lsp.rpc.start({ resolved.server }, dispatchers, { cwd = config.cmd_cwd, env = config.cmd_env, detached = config.detached })
+end
+
+function M.lsp_config()
+  register()
+  local available = not session.failed and vim.fn.executable(resolve().server) == 1
+  return {
+    cmd = default_cmd,
+    filetypes = { 'cubrid' },
+    exit_timeout = 2000,
+    settings = { cubrid = vim.empty_dict() },
+    root_dir = available and session.root or function(buf, on_dir)
+      if session.failed or session.restarting then return end
+      local config = vim.lsp.config.cubrid
+      local resolved = resolve(config)
+      if config.cmd == default_cmd and vim.fn.executable(resolved.server) ~= 1 then
+        session.failed = true
+        notice('language server is not executable: ' .. resolved.server .. '. Install cubrid-language-server on Neovim PATH or set trusted server_path, then run :CubridRestart', vim.log.levels.ERROR)
+        return
+      end
+      completion.prepare(buf)
+      on_dir(session.root)
+    end,
+    before_init = function(params, config)
+      local resolved = config._cubrid_active or resolve(config)
+      config._cubrid_active = resolved
+      config.settings.cubrid = vim.deepcopy(resolved.settings)
+      config.init_options = vim.deepcopy(config.init_options or {})
+      config.init_options.cubrid = vim.deepcopy(resolved.settings)
+      params.initializationOptions = config.init_options
+    end,
+    on_exit = function(code)
+      if session.restarting or not vim.lsp.is_enabled('cubrid') or vim.v.exiting ~= vim.NIL then return end
+      session.failed = true
+      vim.lsp.config('cubrid', {})
+      notice('language server exited with code ' .. code .. '; use :CubridRestart to retry', vim.log.levels.ERROR)
+    end,
+  }
+end
+
 function M.setup(options)
   local config = parse(options == nil and {} or options)
   local previous = session.config
   session.config = config
-  if not session.registered then
-    session.registered = true
+  register()
+  if not session.filetypes then
+    session.filetypes = true
     vim.filetype.add({ pattern = {
       ['.*%.[cC][sS][qQ][lL]'] = function() if session.config.file_extensions['.csql'] then return 'cubrid' end end,
       ['.*%.[sS][qQ][lL]'] = function() if session.config.file_extensions['.sql'] then return 'cubrid' end end,
     } })
-    local group = vim.api.nvim_create_augroup('cubrid', { clear = true })
-    vim.api.nvim_create_autocmd('FileType', { group = group, callback = function(args)
-      inspect_filetype(args.buf)
-      if eligible(args.buf) then
-        attach(args.buf)
-      elseif session.buffers[args.buf] then
-        session.buffers[args.buf] = nil
-        local client = session.client and vim.lsp.get_client_by_id(session.client)
-        if client then completion.detach(args.buf, client.id); vim.lsp.buf_detach_client(args.buf, client.id) end
-      end
-    end })
-    vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, { group = group, callback = function(args) inspect_filetype(args.buf) end })
-    vim.api.nvim_create_autocmd('LspAttach', { group = group, callback = function(args) inspect_clients(args.buf) end })
-    vim.api.nvim_create_autocmd('BufWipeout', { group = group, callback = function(args) session.warned[args.buf] = nil end })
-    vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) completion.detach(args.buf); session.buffers[args.buf] = nil end })
-    vim.api.nvim_create_autocmd('LspDetach', { group = group, callback = function(args) completion.detach(args.buf, args.data.client_id) end })
-    vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = function()
-      session.phase = 'disposed'
-      local client = session.client and vim.lsp.get_client_by_id(session.client)
-      if client then client:stop() end
-    end })
-    vim.api.nvim_create_user_command('CubridReloadSchema', function() M.reload_schema() end, {})
-    vim.api.nvim_create_user_command('CubridRestart', function() M.restart() end, {})
-    vim.api.nvim_create_user_command('CubridDoctor', function() vim.notify(require('cubrid.doctor').format(M.doctor())) end, {})
   end
-  for _, buf in ipairs(vim.api.nvim_list_bufs()) do if eligible(buf) and vim.api.nvim_buf_is_loaded(buf) then session.buffers[buf] = true end end
-  for buf in pairs(session.buffers) do inspect_clients(buf) end
-  if previous and previous.server ~= config.server then M.restart()
-  elseif session.phase == 'running' then update(vim.lsp.get_client_by_id(session.client))
-  elseif session.phase == 'idle' then start() end
+  for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+    if eligible(buf) then completion.prepare(buf); inspect_clients(buf) end
+  end
+  if previous and previous.server ~= config.server and vim.lsp.is_enabled('cubrid') then
+    M.restart()
+  else
+    for _, client in ipairs(clients()) do update(client) end
+    if config.auto_start and not session.restarting then vim.lsp.enable('cubrid') end
+  end
 end
 
 function M.doctor()
-  return require('cubrid.doctor').run(environment.resolve(session.config or parse({})), session)
+  local attached = vim.lsp.get_clients({ name = 'cubrid', bufnr = 0, _uninitialized = true })
+  local client = attached[1] or clients()[1]
+  return require('cubrid.doctor').run(resolve(vim.lsp.config.cubrid), {
+    client = client and client.id,
+    active = client and client.config._cubrid_active,
+    phase = client and (client.initialized and 'running' or 'starting') or 'idle',
+  })
 end
 
 return M
