@@ -79,10 +79,11 @@ schema_timeout    Positive deadline in seconds, at most 300. Default 5.
 schema_prompt     Prompt once per client without configured metadata. Default false.
 
 The plugin warns about observed conflicting filetypes and attached foreign LSP
-clients. It does not change their state. If the server is missing, install it
-on Neovim PATH or set server_path, then run :CubridRestart. Missing server
-and native prerequisites produce WARN notifications with the GitHub installation
-guide and retry steps. Native failures leave keyword completion available while
+clients, except for the `copilot` client. It does not change their state. If the
+server is missing, install it on Neovim PATH or set server_path, then run
+:CubridRestart. Missing server and native prerequisites produce WARN
+notifications with the GitHub installation guide and retry steps. Native
+failures leave keyword completion available while
 strict syntax diagnostics are unavailable. Unchanged failures do not repeat
 across buffers or settings updates. Repair the paths and run :CubridRestart.
 With auto_start=false, these checks wait until the LSP configuration is enabled.

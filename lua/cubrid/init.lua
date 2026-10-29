@@ -118,7 +118,7 @@ local function inspect_clients(buf)
   vim.schedule(function()
     if not session.config or not eligible(buf) then return end
     for _, client in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
-      if client.name ~= 'cubrid' then
+      if client.name ~= 'cubrid' and client.name ~= 'copilot' then
         local name = vim.api.nvim_buf_get_name(buf)
         local advice = ' To disable automatic association, exclude its suffix from file_extensions and reopen the file.'
         warn_once(buf, 'client:' .. client.id, 'LSP client ' .. client.name .. ' (id ' .. client.id .. ') is attached to ' .. name .. ' and may overlap completion or diagnostics. Choose one server.' .. advice)

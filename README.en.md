@@ -55,7 +55,7 @@ opts = { file_extensions = { '.csql' } }
 
 Use `{ '.sql' }` for SQL only, or `{}` to disable both automatic associations. The list replaces the defaults. Enter lowercase suffixes; filename matching is case-insensitive. The old `sql` option is rejected. Replace it with `file_extensions`.
 
-The plugin warns when it observes another filetype or LSP client. Resolve the filetype rule or choose one server. To disable an automatic association, remove its suffix from `file_extensions` and reopen the file. If the server is missing, install it or set a trusted `server_path`, then run `:CubridRestart`.
+The plugin warns when it observes another filetype or LSP client, except for the `copilot` client. Resolve the filetype rule or choose one server. To disable an automatic association, remove its suffix from `file_extensions` and reopen the file. If the server is missing, install it or set a trusted `server_path`, then run `:CubridRestart`.
 
 This is an alpha release. The server reports unsupported syntax coverage and native runtime failures as diagnostics. An empty diagnostic list does not certify all SQL. Highlighting and indentation are lexical.
 
