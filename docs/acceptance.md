@@ -302,3 +302,11 @@ python3 /home/vimkim/temp/cubrid-show-hints-606-yszqo6t9/evidence/run-editor-acc
 Use `default` or `external` for the other activation modes. The driver schedules the checks after startup so normal editor events can run. The independent review verified lifecycle and override cases and confirmed that the final engine boundary correction passed through the public API and framed LSP. Native coverage is unchanged, and authoring warnings do not certify complete SQL validity.
 
 The isolated integration used LazyVim commit `999700997f72227187d49d8b92667183dc7fc809` and Blink commit `78336bc89ee5365633bcf754d93df01678b5c08f`. Their source checkouts had no tracked changes after verification.
+
+## Approved SHOW/hint integration after concurrent CI
+
+The approved rebase retains the documentation and CI changes through `8e9f200e881f82241ced6dd01735b104ede0d203`. Runtime files in `lua`, `lsp`, `ftplugin`, `syntax` and `indent` match the independently reviewed `f5ac73b` version exactly. Both acceptance additions were retained. The native configuration tests in three activation modes and custom-root test now run in the portable suite. The native settings-success and SHOW/hint checks run in the full suite. The runners retain their 120-second deadline and five-second termination escalation.
+
+The existing package verifier first rejected `lsp/cubrid.lua`. Commit `ddad76a` adds `lsp` to its source inventory. The red and green logs are in `/home/vimkim/temp/cubrid-show-hints-606-yszqo6t9/evidence/integration/`. The verified archive SHA-256 is `438c48a890e01575b262176279ed2aa2e04571bf58232a50ac1f176549c96386`.
+
+The extracted package passed 21 portable and six native cases using the current engine task server and read-only qualified native inputs. A separate extracted portable run passed all 21 cases with the existing CI server built from core `2a8842c45c4fb219e322afd731c27937a107324f`. Logs, per-case receipts, process-exit receipts, and `checks.json` are under that integration directory. The current engine also passed its complete 120 core, 34 LSP, 46 native-parser and seven native LSP tests. Independent integration review found no blocking issue. These local results do not claim hosted CI coverage or native success from the portable workflow.
