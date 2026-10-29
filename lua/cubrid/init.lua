@@ -1,5 +1,6 @@
 local M = {}
 local completion = require('cubrid.completion')
+local environment = require('cubrid.environment')
 local session = { phase = 'idle', buffers = {}, warned = {} }
 local keys = {
   server_path = true, file_extensions = true, parser_worker = true, runtime_prefix = true,
@@ -102,7 +103,12 @@ local function inspect_clients(buf)
 end
 
 local function update(client)
-  client:notify('workspace/didChangeConfiguration', { settings = { cubrid = session.config.settings } })
+  local config = vim.deepcopy(session.config)
+  config.server = session.active.server
+  local resolved = environment.resolve(config)
+  resolved.server_source = session.active.server_source
+  session.active = resolved
+  client:notify('workspace/didChangeConfiguration', { settings = { cubrid = resolved.settings } })
 end
 
 local start
@@ -114,7 +120,8 @@ end
 
 start = function()
   if session.phase ~= 'idle' or not next(session.buffers) then return end
-  local config = session.config
+  local config = environment.resolve(session.config)
+  session.active = config
   if vim.fn.executable(config.server) ~= 1 then
     session.phase = 'failed'
     notice('language server is not executable: ' .. config.server .. '. Install cubrid-language-server on Neovim PATH or set trusted server_path, then run :CubridRestart', vim.log.levels.ERROR)
@@ -223,12 +230,17 @@ function M.setup(options)
     end })
     vim.api.nvim_create_user_command('CubridReloadSchema', function() M.reload_schema() end, {})
     vim.api.nvim_create_user_command('CubridRestart', function() M.restart() end, {})
+    vim.api.nvim_create_user_command('CubridDoctor', function() vim.notify(require('cubrid.doctor').format(M.doctor())) end, {})
   end
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do if eligible(buf) and vim.api.nvim_buf_is_loaded(buf) then session.buffers[buf] = true end end
   for buf in pairs(session.buffers) do inspect_clients(buf) end
   if previous and previous.server ~= config.server then M.restart()
   elseif session.phase == 'running' then update(vim.lsp.get_client_by_id(session.client))
   elseif session.phase == 'idle' then start() end
+end
+
+function M.doctor()
+  return require('cubrid.doctor').run(environment.resolve(session.config or parse({})), session)
 end
 
 return M

@@ -18,6 +18,13 @@ file_extensions   Dense list of exact suffixes ".sql" and ".csql". Default
                   after changes. Replace the old sql option with this list.
 parser_worker     Absolute path to the qualified native worker.
 runtime_prefix    Absolute path to its matching runtime. Set both paths.
+                  Omit both to discover the worker and runtime from the
+                  selected server installation metadata. The plugin reads
+                  native/parser-worker/build/parser-worker and its adjacent
+                  manifest.json under the recorded source directory. The
+                  manifest supplies runtimePrefix. just sync does not build
+                  the worker. Wheel or index installs and removed local builds
+                  require explicit native paths.
 worker_manifest   Optional absolute manifest path. Requires the native pair.
 worker_timeout    Positive seconds up to 300. Requires the native pair.
 profile           Nonempty parser profile override.
@@ -60,6 +67,12 @@ buffer text and does not claim that the server edit was applied.
 :CubridReloadSchema                                       *:CubridReloadSchema*
     Reload snapshots and report availability and stale state per document.
     A failed reload retains the last valid metadata.
+
+:CubridDoctor                                                   *:CubridDoctor*
+    Report the selected installation, active client, diagnostics, and LSP
+    log. Run a private syntax diagnostic probe with a fixed SQL document.
+    :checkhealth cubrid shows the same report. The Lua function
+    require('cubrid').doctor() returns a report table for headless use.
 
 :CubridRestart                                                 *:CubridRestart*
     Stop and restart the owned language server. Use this command to retry a

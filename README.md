@@ -16,15 +16,12 @@ tar -xzf cubrid.nvim-alpha.tar.gz -C ~/.local/share/nvim/site/pack/local/start/c
 Neovim을 시작하고 `:helptags ALL`을 실행하여 도움말을 색인합니다. 신뢰하는 사용자 설정의 Lua 코드에서 설정합니다.
 
 ```lua
-require('cubrid').setup({
-  file_extensions = { '.sql', '.csql' }, -- 기본값
-  server_path = '/absolute/path/to/cubrid-language-server',
-  parser_worker = '/absolute/path/to/parser-worker',
-  runtime_prefix = '/absolute/path/to/cubrid/runtime',
-})
+require('cubrid').setup()
 ```
 
-서버 경로를 생략하면 Neovim 프로세스의 `PATH`에서 `cubrid-language-server`를 찾습니다. `parser_worker`와 `runtime_prefix`는 함께 지정합니다. 지정하지 않으면 런타임 부재 진단이 표시되지만 키워드 자동 완성은 사용할 수 있습니다. 서버와 네이티브 런타임은 별도로 설치해야 합니다. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요.
+플러그인은 Neovim의 `PATH`에서 `cubrid-language-server`를 찾습니다. 로컬 소스에서 `just sync`로 설치한 패키지의 메타데이터를 읽고 기록된 소스 디렉터리의 `native/parser-worker/build/parser-worker`를 찾습니다. 인접한 `manifest.json`의 `runtimePrefix`에서 런타임 경로를 읽습니다. `just sync`는 네이티브 워커를 빌드하지 않습니다. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요.
+
+휠이나 패키지 인덱스에서 설치했거나 로컬 네이티브 빌드가 없다면 신뢰하는 Lua 설정에 절대 경로 `parser_worker`와 `runtime_prefix`를 함께 지정하세요. 절대 경로 `server_path`도 지정할 수 있습니다. 검색에 실패하면 키워드 자동 완성은 사용할 수 있으며 서버가 런타임 부재를 진단합니다. `:CubridDoctor` 또는 `:checkhealth cubrid`로 설치와 네이티브 진단을 확인하세요.
 
 `.sql`과 `.csql`은 기본적으로 `cubrid` 파일 형식으로 감지됩니다. `.csql`만 사용하려면 다음 설정을 사용하세요. 기존 버퍼는 다시 열어야 합니다.
 

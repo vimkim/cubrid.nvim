@@ -16,15 +16,12 @@ tar -xzf cubrid.nvim-alpha.tar.gz -C ~/.local/share/nvim/site/pack/local/start/c
 Start Neovim and run `:helptags ALL` to index the help. Configure the plugin in trusted user Lua.
 
 ```lua
-require('cubrid').setup({
-  file_extensions = { '.sql', '.csql' }, -- default
-  server_path = '/absolute/path/to/cubrid-language-server',
-  parser_worker = '/absolute/path/to/parser-worker',
-  runtime_prefix = '/absolute/path/to/cubrid/runtime',
-})
+require('cubrid').setup()
 ```
 
-Without `server_path`, the plugin finds `cubrid-language-server` on Neovim's `PATH`. Set `parser_worker` and `runtime_prefix` together. Without them, diagnostics report the missing runtime and keyword completion remains available. Install the server and native runtime separately. See the [shared engine installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md).
+The plugin finds `cubrid-language-server` on Neovim's `PATH`. For a local source installation made with `just sync`, it reads the installed package metadata and looks for `native/parser-worker/build/parser-worker` under the recorded source directory. It reads `runtimePrefix` from the adjacent `manifest.json`. `just sync` does not build the native worker. See the [shared engine installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md).
+
+For a wheel or index installation, or if the local native build is gone, set both `parser_worker` and `runtime_prefix` to absolute paths in trusted Lua setup. You can also set an absolute `server_path`. If discovery fails, keyword completion remains available and the server reports the missing runtime. Run `:CubridDoctor` or `:checkhealth cubrid` to inspect the installation and a private native diagnostic probe.
 
 Both `.sql` and `.csql` use the `cubrid` filetype by default. To use only `.csql`, configure the plugin as follows. Reopen existing buffers after changing the setting.
 

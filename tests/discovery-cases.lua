@@ -1,0 +1,58 @@
+local dir = assert(vim.env.CUBRID_TEST_DIR) .. '/fixtures [special]'
+vim.fn.mkdir(dir .. '/install/bin', 'p')
+local site = dir .. '/install/lib/python3.12/site-packages/cubrid_language_tools-1.dist-info'
+vim.fn.mkdir(site, 'p')
+local server = dir .. '/install/bin/cubrid-language-server'
+local pidfile = dir .. '/server.pid'
+vim.fn.writefile({ '#!/bin/sh', 'echo $$ > "' .. pidfile .. '"', 'exec sleep 30' }, server)
+vim.fn.setfperm(server, 'rwxr-xr-x')
+local source = dir .. '/source with space'
+local build = source .. '/native/parser-worker/build'
+vim.fn.mkdir(build, 'p')
+vim.fn.writefile({ '#!/bin/sh', 'exit 0' }, build .. '/parser-worker')
+vim.fn.setfperm(build .. '/parser-worker', 'rwxr-xr-x')
+local runtime = dir .. '/runtime'
+vim.fn.mkdir(runtime, 'p')
+local function json(path, value) vim.fn.writefile({ vim.json.encode(value) }, path) end
+local metadata = site .. '/direct_url.json'
+local manifest = build .. '/manifest.json'
+json(metadata, { url = vim.uri_from_fname(source), dir_info = vim.empty_dict() })
+json(manifest, { runtimePrefix = runtime })
+local cubrid = require('cubrid')
+cubrid.setup({ server_path = server })
+local report = cubrid.doctor()
+assert(report.native and report.native.parserWorker == build .. '/parser-worker', vim.inspect(report))
+assert(report.error and report.error:find('timed out', 1, true), vim.inspect(report))
+assert(#vim.lsp.get_clients({ name = 'cubrid-doctor' }) == 0, 'timed out client cleaned up')
+local pid = tonumber(vim.fn.readfile(pidfile)[1])
+assert(vim.wait(2000, function() return not vim.uv.kill(pid, 0) end, 20), 'timed out process exited')
+vim.fn.writefile({ '#!/bin/sh', 'exit 7' }, server)
+local failure = cubrid.doctor()
+assert(failure.error and (failure.error:find('exited', 1, true) or failure.error:find('start', 1, true)), vim.inspect(failure))
+assert(#vim.lsp.get_clients({ name = 'cubrid-doctor' }) == 0, 'exited client cleaned up')
+json(metadata, { url = vim.uri_from_fname(source), dir_info = {} })
+assert(cubrid.doctor().error:find('Invalid local source URL', 1, true))
+vim.fn.writefile({ '{' }, metadata)
+report = cubrid.doctor()
+assert(report.error:find('Invalid local source URL', 1, true), vim.inspect(report))
+json(metadata, { url = 'file:///bad%2Z', dir_info = vim.empty_dict() })
+assert(cubrid.doctor().error:find('Invalid local source URL', 1, true))
+json(metadata, { url = 'https://example.com/repo', dir_info = vim.empty_dict() })
+assert(cubrid.doctor().error:find('Invalid local source URL', 1, true))
+json(metadata, { url = vim.uri_from_fname(source), dir_info = vim.empty_dict() })
+vim.fn.delete(manifest)
+assert(cubrid.doctor().error:find('manifest', 1, true))
+json(manifest, { runtimePrefix = runtime })
+vim.fn.delete(build .. '/parser-worker')
+assert(cubrid.doctor().error:find('worker', 1, true))
+vim.fn.writefile({ '#!/bin/sh', 'exit 0' }, build .. '/parser-worker')
+vim.fn.setfperm(build .. '/parser-worker', 'rwxr-xr-x')
+json(manifest, { runtimePrefix = dir .. '/missing' })
+assert(cubrid.doctor().error:find('runtime', 1, true))
+vim.fn.mkdir(dir .. '/install/lib/python3.11/site-packages/cubrid_language_tools-2.dist-info', 'p')
+json(dir .. '/install/lib/python3.11/site-packages/cubrid_language_tools-2.dist-info/direct_url.json', { url = vim.uri_from_fname(source), dir_info = vim.empty_dict() })
+assert(cubrid.doctor().error:find('found 2', 1, true))
+cubrid.setup({ server_path = '/does/not/exist' })
+assert(cubrid.doctor().error:find('not executable', 1, true))
+print('discovery failure cases passed')
+vim.cmd('qa!')

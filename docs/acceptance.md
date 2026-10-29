@@ -172,3 +172,30 @@ Independent review repeated the extracted `file-extensions.lua` and `sql-default
 Both branches rebased without changes and fast-forwarded into local `main` under the existing integration approval. The plugin implementation is `878db420df273212604997f4f66568ec22d3c0de`, and the personal configuration is `90957f7d04744da5c7bd8a0af0a6179d15bae86d`. The live configuration now explicitly selects `{ ".sql", ".csql" }`.
 
 `bash /home/vimkim/temp/cubrid-nvim-extension-options-20261029/verification/run.sh` passed against the actual user configuration and merged plugin. It checked the configured suffix list, both extensions, native diagnostics, `SELECT` completion, one initialized CUBRID client, Iron definitions, and one conflict WARN naming `file_extensions`. Output is `verification/live/headless.log` in the dispatch directory. The script isolates writable state and disables automatic installation, Tree-sitter, and Mason. The unrelated `lazyvim.json` edit retained its exact bytes and unstaged status. Remote publication was outside this approval.
+
+## Installed discovery and doctor
+
+On 2026-10-29, Neovim 0.12.5 on Linux used the PATH server at `/home/vimkim/.local/bin/cubrid-language-server`. Its canonical executable belonged to the local `just sync` installation, and its package metadata recorded `/home/vimkim/gh/cubrid-language-tools`. The adjacent native manifest selected `/home/vimkim/.cub/install/develop/debug`. The server and native inputs were read-only.
+
+Before implementation, `tests/discovery-doctor.lua` failed because `require('cubrid').doctor` did not exist. The later focused run passed and observed `CUBRID-S1001` from both the private probe and a normal SQL buffer. It also tested restart, explicit native paths, replacing a broken native pair with discovery, and keeping the active native paths when PATH changes. The failure-case test covered escaped source paths, a prefix containing glob characters, invalid and remote URLs, malformed metadata, ambiguous installations, a missing worker, manifest, or runtime, server exit, and a timeout. The timeout fixture checked that its server PID exited. The display test exercised `:CubridDoctor` and `:checkhealth cubrid`.
+
+The source suite passed with a fresh directory:
+
+```sh
+CUBRID_TEST_DIR=/home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final-source \
+CUBRID_TEST_SERVER=/home/vimkim/.local/bin/cubrid-language-server \
+PATH=/home/vimkim/.local/bin:$PATH timeout 240 sh tests/run.sh
+```
+
+The extracted package suite used these commands:
+
+```sh
+scripts/package.sh /home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final4.tar.gz
+mkdir -p /home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final4-extract
+tar xzf /home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final4.tar.gz -C /home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final4-extract
+CUBRID_TEST_DIR=/home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final4-installed \
+CUBRID_TEST_SERVER=/home/vimkim/.local/bin/cubrid-language-server \
+PATH=/home/vimkim/.local/bin:$PATH timeout 240 sh /home/vimkim/temp/cubrid-nvim-discovery-601/implementation/final4-extract/tests/run.sh
+```
+
+The archive SHA-256 is `10af15d740363fcc600779de19b5d2c0700bbee383f5e7105b71a7c748f5ee5e`. Logs and the failure-before output are under `/home/vimkim/temp/cubrid-nvim-discovery-601/implementation`. Use fresh test and extraction directories when repeating the commands. Other operating systems, Neovim versions, and wheel or index installations were not tested. The private probe tests one fixed syntax error; it does not establish complete SQL coverage. The timeout fixture verifies its direct server PID. A separate successful-probe check recorded the server and native worker PIDs and confirmed that both exited. Its script and log are `/home/vimkim/temp/cubrid-nvim-discovery-601/root-review/verify.lua` and `/home/vimkim/temp/cubrid-nvim-discovery-601/root-review/final4.log`. The separate Neovim configuration change was verified in a headless copy and committed as `a872ae2` in its own checkout.

@@ -35,3 +35,7 @@ for pid in $(cat "$testdir/exit-children"); do
   fi
 done
 printf 'Owned direct children exited with Neovim\n'
+
+nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/discovery-doctor.lua"
+nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/discovery-cases.lua"
+nvim --headless -u NONE --cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT)' -l "$root/tests/doctor-display.lua"
