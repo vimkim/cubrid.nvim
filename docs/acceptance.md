@@ -207,3 +207,24 @@ After explicit user approval, both task branches rebased onto their current loca
 The unrelated `lazyvim.json` edit was temporarily stashed during the clean-destination merge, restored, and compared byte-for-byte against its pre-merge copy. It remains unstaged. The temporary preservation stash was dropped after verification. No remote publication was included in this approval.
 
 Live LazyVim startup also generated `doc/tags` in the local plugin checkout. The narrow `/doc/tags` ignore rule keeps this disposable help index out of source control. The generated index is preserved in the primary checkout.
+
+## Portable package CI
+
+The CI implementation starts from `b5c0c6483583ca5d609169cd1b52336040e1292f`. The official Neovim 0.12.5 Linux x86-64 release archive has SHA-256 `bce0f56eda1f1b1db6eee8f4133d7a38813ea07933837dd1777411ca384c6875`. The release metadata and the downloaded archive matched. The downloaded binary ran on this host.
+
+The package verifier compared all 28 archive files with the checkout. The extracted portable suite passed with Python 3.10.6 and a real language server built from core commit `2a8842c45c4fb219e322afd731c27937a107324f`. The full extracted suite also passed with the existing local server, worker and runtime, including `integration.lua` and `startup.lua`. A missing server, a nonexistent server, an unexpected Neovim version and a changed archive member each produced a failure. Receipts and logs are under `/home/vimkim/temp/cubrid-editor-hardening-c57_w98j/evidence/neovim-ci`.
+
+To repeat the extracted portable check, use a fresh output directory and an absolute server path.
+
+```sh
+out=$(mktemp -d)
+scripts/package.sh "$out/plugin.tar.gz"
+python3 scripts/verify-package.py "$out/plugin.tar.gz" > "$out/inventory.txt"
+mkdir "$out/plugin"
+tar -xzf "$out/plugin.tar.gz" -C "$out/plugin"
+CUBRID_TEST_SERVER=/absolute/path/to/cubrid-language-server \
+CUBRID_TEST_NVIM_VERSION=0.12.5 CUBRID_TEST_DIR="$out/results" \
+  "$out/plugin/tests/run-portable.sh"
+```
+
+`tests/run.sh` also runs the two native cases and requires the local qualified worker and runtime. Hosted CI runs only the portable suite, including the missing-runtime diagnostic. Native parser success, other platforms and lower Neovim versions are outside its scope. The new workflow has not yet run on GitHub.
