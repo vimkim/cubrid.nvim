@@ -41,7 +41,7 @@ jobs:
           "$RUNNER_TEMP/core-env/bin/python" -m pip wheel --no-build-isolation --no-deps --wheel-dir "$RUNNER_TEMP/wheels" ./core
           sha256sum "$RUNNER_TEMP"/wheels/*.whl > "$RUNNER_TEMP/receipts/core-wheel.sha256"
           wheel=$(find "$RUNNER_TEMP/wheels" -name "*.whl" -print -quit)
-          "$RUNNER_TEMP/core-env/bin/python" -m pip install "$wheel[lsp]"
+          "$RUNNER_TEMP/core-env/bin/python" -m pip install "${wheel}[lsp]"
           "$RUNNER_TEMP/core-env/bin/python" -m pip freeze > "$RUNNER_TEMP/receipts/python-packages.txt"
           "$RUNNER_TEMP/core-env/bin/python" -c 'import cubrid_language; print(cubrid_language.__file__)' >> "$RUNNER_TEMP/receipts/identity.txt"
       - name: Download official Neovim

@@ -227,10 +227,23 @@ CUBRID_TEST_NVIM_VERSION=0.12.5 CUBRID_TEST_DIR="$out/results" \
   "$out/plugin/tests/run-portable.sh"
 ```
 
-`tests/run.sh` also runs the two native cases and requires the local qualified worker and runtime. Hosted CI runs only the portable suite, including the missing-runtime diagnostic. Native parser success, other platforms and lower Neovim versions are outside its scope. The new workflow has not yet run on GitHub.
+`tests/run.sh` also runs the native cases and requires the local qualified worker and runtime. Hosted CI runs only the portable suite, including the missing-runtime diagnostic. Native parser success, other platforms and lower Neovim versions are outside its scope. The workflow had not run on GitHub at the time of this check.
 
 ### Timeout escalation
 
 Both test runners now send SIGKILL five seconds after the 120-second deadline if Neovim ignores SIGTERM. A short process-group control reproduced the hang on `bf368ad` and passed after the change. Its script and red and green receipts are in `/home/vimkim/temp/cubrid-editor-hardening-c57_w98j/neovim-deadline-fix`. The control scales both intervals to 0.2 seconds and uses an owned TERM-resistant Python process. It does not establish cleanup of descendants that leave the process group.
 
 The rebuilt archive passed the 28-file source comparison and its extracted headless smoke test. Its SHA-256 is `70f972af4cb1295e738c0203b1778449b1bd318a84cfa5eb434cd5aa818fd5e6`. The full portable and native suites were not repeated for this flag-only change; their previous results are recorded above.
+
+## Post-rebase package qualification
+
+On 2026-10-29, the rebased package verifier matched 34 archive files to the checkout. The extracted package passed 17 portable cases on official Neovim 0.12.5 with the server built from core `2a8842c45c4fb219e322afd731c27937a107324f`. The full extracted suite passed the same 17 cases with the local server and four native cases using the qualified worker and runtime. The portable discovery failure cases use disposable fixtures. The native discovery and doctor display cases require the local server installation metadata and native pair. Hosted CI runs the portable cases only and does not establish native parser success.
+
+Receipts and the source-matched archive are in `/home/vimkim/temp/cubrid-editor-hardening-c57_w98j/integration-neovim`. To repeat the full run, use a fresh output directory and put the official Neovim and local server directories on `PATH`:
+
+```sh
+PATH=/path/to/nvim/bin:/home/vimkim/gh/cubrid-language-tools/.venv/bin:$PATH \
+CUBRID_TEST_SERVER=/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server \
+CUBRID_TEST_NVIM_VERSION=0.12.5 CUBRID_TEST_DIR=/absolute/fresh/output \
+  /absolute/extracted/plugin/tests/run.sh
+```
