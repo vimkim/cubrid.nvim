@@ -20,7 +20,7 @@ eq(vim.bo.indentexpr, vim.go.indentexpr, 'undo indent')
 vim.bo.modified = false
 vim.cmd('edit generic.sql')
 eq(vim.bo.filetype, 'cubrid', 'sql enabled by default')
-require('cubrid').setup({ server_path = '/missing/cubrid-language-server', sql = false })
+require('cubrid').setup({ server_path = '/missing/cubrid-language-server', file_extensions = {'.csql'} })
 vim.cmd('edit opted.sql')
 eq(vim.bo.filetype, 'sql', 'sql opt out')
 local ok = pcall(require('cubrid').setup, { parser_worker = '/tmp/a' })

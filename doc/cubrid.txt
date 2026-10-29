@@ -11,8 +11,11 @@ raise an error and leave the last valid settings in effect.
 
 server_path       Absolute server executable. Omit to use
                   cubrid-language-server on the editor host's PATH.
-sql               Associate .sql with cubrid. Default true; false keeps
-                  .csql only. Reopen existing files after changing it.
+file_extensions   Dense list of exact suffixes ".sql" and ".csql". Default
+                  { ".sql", ".csql" }; a single suffix selects only that
+                  extension, and {} disables both. Matching filenames ignores
+                  case. The list replaces the defaults. Reopen existing files
+                  after changes. Replace the old sql option with this list.
 parser_worker     Absolute path to the qualified native worker.
 runtime_prefix    Absolute path to its matching runtime. Set both paths.
 worker_manifest   Optional absolute manifest path. Requires the native pair.

@@ -2,7 +2,7 @@ local M = {}
 local completion = require('cubrid.completion')
 local session = { phase = 'idle', buffers = {}, warned = {} }
 local keys = {
-  server_path = true, sql = true, parser_worker = true, runtime_prefix = true,
+  server_path = true, file_extensions = true, parser_worker = true, runtime_prefix = true,
   worker_manifest = true, worker_timeout = true, profile = true, script_mode = true,
   config_path = true, schema_snapshot = true,
 }
@@ -16,11 +16,20 @@ end
 
 local function parse(options)
   if type(options) ~= 'table' then error('cubrid setup expects a table', 3) end
+  if options.sql ~= nil then error('sql is no longer supported; use file_extensions: {".sql", ".csql"} for both or {".csql"} for .csql only', 3) end
   for key in pairs(options) do
     if not keys[key] then error('unknown cubrid option: ' .. tostring(key), 3) end
   end
-  local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', sql = options.sql ~= false, settings = vim.empty_dict() }
-  if options.sql ~= nil and type(options.sql) ~= 'boolean' then error('sql must be a boolean', 3) end
+  local extensions = options.file_extensions
+  if extensions == nil then extensions = { '.sql', '.csql' } end
+  if type(extensions) ~= 'table' or not vim.islist(extensions) then error('file_extensions must be a dense list of .sql and .csql', 3) end
+  local selected = {}
+  for _, suffix in ipairs(extensions) do
+    if suffix ~= '.sql' and suffix ~= '.csql' then error('file_extensions supports only .sql and .csql', 3) end
+    if selected[suffix] then error('file_extensions contains a duplicate: ' .. suffix, 3) end
+    selected[suffix] = true
+  end
+  local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', file_extensions = selected, settings = vim.empty_dict() }
   local values = result.settings
   if options.parser_worker ~= nil or options.runtime_prefix ~= nil then
     values.parserWorker = absolute(options.parser_worker, 'parser_worker')
@@ -69,11 +78,11 @@ local function inspect_filetype(buf)
     if not session.config or not vim.api.nvim_buf_is_valid(buf) or not vim.api.nvim_buf_is_loaded(buf) then return end
     local name = vim.api.nvim_buf_get_name(buf)
     local lower = name:lower()
-    local is_sql = lower:match('%.sql$')
-    local managed = lower:match('%.csql$') or (session.config.sql and is_sql)
+    local suffix = lower:match('(%.[^./]+)$')
+    local managed = session.config.file_extensions[suffix]
     local ft = vim.bo[buf].filetype
     if managed and ft ~= '' and ft ~= 'cubrid' then
-      local advice = is_sql and 'Set sql=false for .csql only, or adjust filetype configuration and reopen the file.' or 'Adjust filetype configuration and reopen the file.'
+      local advice = 'Exclude ' .. suffix .. ' from file_extensions or adjust the conflicting filetype configuration, then reopen the file.'
       warn_once(buf, 'filetype:' .. ft, 'filetype conflict for ' .. name .. ': expected cubrid, observed ' .. ft .. '. A filetype rule or manual setting may override detection. ' .. advice)
     end
   end)
@@ -85,7 +94,7 @@ local function inspect_clients(buf)
     for _, client in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
       if client.id ~= session.client then
         local name = vim.api.nvim_buf_get_name(buf)
-        local advice = name:lower():match('%.sql$') and ' For generic SQL, sql=false enables .csql only.' or ''
+        local advice = ' To disable automatic association, exclude its suffix from file_extensions and reopen the file.'
         warn_once(buf, 'client:' .. client.id, 'LSP client ' .. client.name .. ' (id ' .. client.id .. ') is attached to ' .. name .. ' and may overlap completion or diagnostics. Choose one server.' .. advice)
       end
     end
@@ -188,8 +197,8 @@ function M.setup(options)
   if not session.registered then
     session.registered = true
     vim.filetype.add({ pattern = {
-      ['.*%.[cC][sS][qQ][lL]'] = 'cubrid',
-      ['.*%.[sS][qQ][lL]'] = function() if session.config.sql then return 'cubrid' end end,
+      ['.*%.[cC][sS][qQ][lL]'] = function() if session.config.file_extensions['.csql'] then return 'cubrid' end end,
+      ['.*%.[sS][qQ][lL]'] = function() if session.config.file_extensions['.sql'] then return 'cubrid' end end,
     } })
     local group = vim.api.nvim_create_augroup('cubrid', { clear = true })
     vim.api.nvim_create_autocmd('FileType', { group = group, callback = function(args)

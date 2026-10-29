@@ -148,3 +148,21 @@ After explicit approval, both task branches rebased without changes and fast-for
 `bash /home/vimkim/temp/cubrid-nvim-sql-defaults-20261029/merge/live/run.sh` passed against the actual `/home/vimkim/.config/nvim/init.lua` and plugin module at `/home/vimkim/gh/cubrid.nvim/lua/cubrid/init.lua`. Both extensions received native diagnostics and `SELECT` completion through one initialized client. Iron retained both REPL definitions. An observed `.sql` filetype conflict produced one WARN with the opt-out advice. The script uses isolated data, cache, state, and lockfile paths and disables automatic plugin installation, Tree-sitter, and Mason. Its output is `headless.log` in that directory. The existing unrelated `lazyvim.json` edit retained its exact bytes and unstaged status after integration and startup. No remote publication was part of this approval.
 
 The final archive SHA-256 is `dc1ca38e1e52f1067f13429f14c1c7da3b7bb7076674639443c8634ee2c30b87`. The archive contains README files, license, runtime files, help and tests. Historical `docs/design.md` and `docs/dispatch.md` describe the earlier alpha and are superseded for this ticket by the selected dispatch above.
+
+## Explicit file extensions
+
+The selected dispatch is `/home/vimkim/temp/cubrid-nvim-extension-options-20261029/dispatch.md`, based on plugin commit `9a8b068cf67574022d6841c41e67b834f3526bc4`. The earlier `sql` option and its examples in this acceptance history are superseded by `file_extensions`.
+
+On Neovim 0.12.5, `tests/file-extensions.lua` failed against the baseline with `unknown cubrid option: file_extensions` and passed after implementation. It checks both defaults, each suffix alone, neither, mixed-case filenames, replacement and default reset, existing-buffer retention, malformed and duplicate lists, unsupported suffixes, and migration errors retaining the last valid selection. `tests/sql-defaults.lua` checks conflicts for enabled and disabled suffixes, scheduled delivery against current settings, deduplication, foreign clients and owned restart. The suite also exercises missing-server recovery and completion.
+
+```sh
+base=/home/vimkim/temp/cubrid-nvim-extension-options-20261029
+server=/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server
+CUBRID_TEST_SERVER="$server" CUBRID_TEST_DIR="$base/source-final" tests/run.sh
+scripts/package.sh "$base/final.tar.gz"
+mkdir -p "$base/final-extracted"
+tar -xzf "$base/final.tar.gz" -C "$base/final-extracted"
+CUBRID_TEST_SERVER="$server" CUBRID_TEST_DIR="$base/final-profile" "$base/final-extracted/tests/run.sh"
+```
+
+Both full suites passed using separate isolated profiles and the existing read-only server, worker and runtime. Logs are `red.log`, `green.log`, `source-final.log`, and `final.log` under the dispatch directory. The extracted archive contains both READMEs, license, runtime files, help and tests. Its SHA-256 is `92e9f1792bc6e3b6b69b7615d471b0b4cfce2df386b14a98a08d7011c27f9594`. Use fresh profile and extraction directories to repeat these commands. Only observed filetype and client events are covered; silent `noautocmd` overrides, other platforms, and lower Neovim versions were not tested. The personal config migration is commit `90957f7` in its isolated worktree; combined and live configuration checks are separate.

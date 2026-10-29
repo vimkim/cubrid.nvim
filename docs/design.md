@@ -2,7 +2,7 @@
 
 ## Problem and usage
 
-Users install a separate editor consumer and supply the existing shared language server. They open `.csql` files, accept completion edits, read syntax diagnostics, and explicitly refresh offline schema metadata. Generic `.sql` remains opt-in through editor file associations. The consumer implements no completion or parser engine.
+Users install a separate editor consumer and supply the existing shared language server. They open `.csql` files, accept completion edits, read syntax diagnostics, and explicitly refresh offline schema metadata. Both `.sql` and `.csql` are detected by default. A replacement `file_extensions` list independently selects either suffix or neither. The consumer implements no completion or parser engine.
 
 VS Code settings select `cubrid.serverPath`, optional trusted `parserWorker`/`runtimePrefix` together, and optional metadata overrides. A `schemaMode` value of `inherit`, `disabled`, or `path` makes snapshot intent explicit. The stored path is used only in `path` mode; changing modes does not require clearing an inactive path. Commands are `cubrid.reloadSchema` and `cubrid.restart`.
 

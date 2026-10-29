@@ -17,7 +17,7 @@ Neovim을 시작하고 `:helptags ALL`을 실행하여 도움말을 색인합니
 
 ```lua
 require('cubrid').setup({
-  sql = true, -- 기본값
+  file_extensions = { '.sql', '.csql' }, -- 기본값
   server_path = '/absolute/path/to/cubrid-language-server',
   parser_worker = '/absolute/path/to/parser-worker',
   runtime_prefix = '/absolute/path/to/cubrid/runtime',
@@ -29,8 +29,10 @@ require('cubrid').setup({
 `.sql`과 `.csql`은 기본적으로 `cubrid` 파일 형식으로 감지됩니다. `.csql`만 사용하려면 다음 설정을 사용하세요. 기존 버퍼는 다시 열어야 합니다.
 
 ```lua
-require('cubrid').setup({ sql = false })
+require('cubrid').setup({ file_extensions = { '.csql' } })
 ```
+
+`.sql`만 선택하려면 `{ '.sql' }`, 자동 연결을 모두 끄려면 `{}`를 사용하세요. 목록은 기본값을 대체하며, 확장자는 소문자로 지정합니다. 파일 이름의 대소문자는 구분하지 않습니다. 기존 `sql` 옵션은 `file_extensions`로 변경하세요.
 
 다른 파일 형식이나 LSP 클라이언트가 감지되면 경고합니다. 서버가 없으면 설치하거나 신뢰하는 `server_path`를 설정한 뒤 `:CubridRestart`를 실행하세요.
 
@@ -42,7 +44,7 @@ Lazy.nvim에서 로컬 설치를 사용할 수도 있습니다. 경로를 실제
 {
   dir = '/absolute/path/to/cubrid.nvim',
   lazy = false,
-  config = function() require('cubrid').setup({ sql = true }) end,
+  config = function() require('cubrid').setup({ file_extensions = { '.sql', '.csql' } }) end,
 }
 ```
 
