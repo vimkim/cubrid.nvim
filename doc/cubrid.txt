@@ -3,6 +3,19 @@
 The plugin uses the shared CUBRID language server for completion and syntax
 diagnostics. It never executes SQL. Neovim 0.12.5 is the tested version.
 
+INSTALL                                                    *cubrid-install*
+
+Install the plugin from https://github.com/vimkim/cubrid.nvim. Install the
+shared server separately using the guide at
+https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md.
+The server must be on Neovim's PATH, or set server_path below. Keyword
+completion does not require the native pair. Strict syntax diagnostics need a
+qualified parser worker and its matching runtime; neither is bundled.
+
+For LazyVim, add a plugin spec under lua/plugins with lazy = false,
+main = "cubrid", and opts = {} so setup registers filetypes at startup.
+See the repository README for the complete spec.
+
 SETUP                                                        *cubrid-setup*
 
 Call require('cubrid').setup(options) from trusted user Lua before opening a
