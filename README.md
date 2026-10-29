@@ -2,28 +2,38 @@
 
 [English](README.en.md) | 한국어
 
-이 플러그인은 `.csql` 파일에 구문 색상과 들여쓰기를 적용하고, 별도로 설치한 CUBRID 언어 서버로 자동 완성과 진단을 제공합니다. SQL을 실행하거나 데이터베이스에 접속하지 않습니다. Neovim 0.12.5에서 테스트했습니다.
+[cubrid.nvim](https://github.com/vimkim/cubrid.nvim)은 `.csql` 파일에 구문 색상과 들여쓰기를 적용하고, 별도로 설치한 CUBRID 언어 서버로 자동 완성과 진단을 제공합니다. SQL을 실행하거나 데이터베이스에 접속하지 않습니다. Neovim 0.12.5에서 테스트했습니다.
 
-## 로컬 설치
+## LazyVim 또는 lazy.nvim으로 설치
 
-압축 파일을 Neovim의 패키지 디렉터리에 풉니다. 경로와 서버 실행 파일을 실제 설치 위치로 바꿉니다.
+Python 3.10 이상과 선택적 `lsp` 의존성을 포함한 공유 언어 서버를 설치하세요. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요. 서버는 플러그인과 별도로 설치합니다. 엄격한 구문 진단에는 검증된 네이티브 파서 워커와 일치하는 런타임도 별도로 필요합니다. 키워드 자동 완성에는 필요하지 않습니다.
 
-```sh
-mkdir -p ~/.local/share/nvim/site/pack/local/start/cubrid.nvim
-tar -xzf cubrid.nvim-alpha.tar.gz -C ~/.local/share/nvim/site/pack/local/start/cubrid.nvim
-```
-
-Neovim을 시작하고 `:helptags ALL`을 실행하여 도움말을 색인합니다. 신뢰하는 사용자 설정의 Lua 코드에서 설정합니다.
+LazyVim에서는 `~/.config/nvim/lua/plugins/cubrid.lua`와 같은 파일에 다음 설정을 추가하세요. lazy.nvim을 직접 사용한다면 lazy.nvim 설정에 이 spec을 추가하세요. `lazy = false`는 시작할 때 `.csql` 파일 형식을 등록합니다.
 
 ```lua
-require('cubrid').setup({
+return {
+  {
+    'vimkim/cubrid.nvim',
+    lazy = false,
+    main = 'cubrid',
+    opts = {},
+  },
+}
+```
+
+설정 방법은 [LazyVim 플러그인 설정](https://www.lazyvim.org/configuration/plugins)과 [lazy.nvim spec 사용법](https://lazy.folke.io/spec)을 참고하세요. 별도의 nvim-lspconfig 설정이나 Blink 소스는 필요하지 않습니다.
+
+기본적으로 Neovim의 `PATH`에서 `cubrid-language-server`를 찾습니다. 서버가 `PATH`에 없다면 `opts`의 `server_path`에 절대 경로를 지정하세요. 체크아웃의 `.venv`에 설치했다면 `.venv/bin/cubrid-language-server`의 절대 경로를 사용하세요. 엄격한 구문 진단을 사용하려면 검증된 워커와 일치하는 런타임의 절대 경로를 `parser_worker`와 `runtime_prefix`에 함께 지정하세요. 예를 들면 다음과 같습니다.
+
+```lua
+opts = {
   server_path = '/absolute/path/to/cubrid-language-server',
   parser_worker = '/absolute/path/to/parser-worker',
   runtime_prefix = '/absolute/path/to/cubrid/runtime',
-})
+}
 ```
 
-서버 경로를 생략하면 Neovim 프로세스의 `PATH`에서 `cubrid-language-server`를 찾습니다. `parser_worker`와 `runtime_prefix`는 함께 지정합니다. 지정하지 않으면 런타임 부재 진단이 표시되지만 키워드 자동 완성은 사용할 수 있습니다. 서버와 네이티브 런타임은 별도로 설치해야 합니다. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요.
+네이티브 워커와 런타임이 없으면 진단에 런타임 부재가 표시되지만 키워드 자동 완성은 사용할 수 있습니다. 플러그인과 서버에는 런타임이 포함되지 않습니다.
 
 `.sql` 파일도 사용하려면 `sql = true`를 설정하고 파일을 다시 엽니다. 기존 SQL 파일 형식은 기본적으로 유지됩니다. 삽입 모드에서 `CTRL-X CTRL-O`를 누르고 `CTRL-N`으로 항목을 선택한 다음 `CTRL-Y`로 적용합니다. CUBRID 클라이언트가 연결된 동안 플러그인이 버퍼의 `omnifunc`를 사용합니다. 연결이 끝나면 이전 값을 복원하며, 사용자가 바꾼 값은 유지합니다. CTRL-Y는 커서 뒤의 텍스트를 포함하여 지원하는 한 줄 편집의 전체 범위를 적용합니다. Space나 Escape로 메뉴를 닫으면 Neovim의 미리보기 접미사가 버퍼에 남을 수 있습니다. 여러 줄 편집과 그 밖의 지원하지 않는 완성 항목은 알림으로 표시하며 부분 메뉴를 열지 않습니다.
 
