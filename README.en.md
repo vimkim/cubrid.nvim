@@ -2,7 +2,7 @@
 
 [한국어](README.md) | English
 
-This plugin provides lexical highlighting and indentation for `.csql` files. It uses a separately installed CUBRID language server for completion and diagnostics. It does not execute SQL or connect to a database. Neovim 0.12.5 has been tested.
+This plugin provides lexical highlighting and indentation for `.sql` and `.csql` files. It uses a separately installed CUBRID language server for completion and diagnostics. It does not execute SQL or connect to a database. Neovim 0.12.5 has been tested.
 
 ## Install locally
 
@@ -17,6 +17,7 @@ Start Neovim and run `:helptags ALL` to index the help. Configure the plugin in 
 
 ```lua
 require('cubrid').setup({
+  sql = true, -- default
   server_path = '/absolute/path/to/cubrid-language-server',
   parser_worker = '/absolute/path/to/parser-worker',
   runtime_prefix = '/absolute/path/to/cubrid/runtime',
@@ -25,7 +26,25 @@ require('cubrid').setup({
 
 Without `server_path`, the plugin finds `cubrid-language-server` on Neovim's `PATH`. Set `parser_worker` and `runtime_prefix` together. Without them, diagnostics report the missing runtime and keyword completion remains available. Install the server and native runtime separately. See the [shared engine installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md).
 
-Set `sql = true` and reopen a file to opt in to `.sql`. The default leaves generic SQL filetypes alone. In insert mode, use `CTRL-X CTRL-O`, select a candidate with `CTRL-N`, and accept it with `CTRL-Y`. The plugin owns the buffer-local `omnifunc` while its CUBRID client is attached. It restores the previous value on detach unless you changed it. CTRL-Y applies the full supported single-line edit, including text after the cursor. Space or Escape can discard the menu while leaving a native preview suffix in the buffer. Multiline and other unsupported completion items are reported without opening a partial menu.
+Both `.sql` and `.csql` use the `cubrid` filetype by default. To use only `.csql`, configure the plugin as follows. Reopen existing buffers after changing the setting.
+
+```lua
+require('cubrid').setup({ sql = false })
+```
+
+The plugin warns when it observes another filetype or LSP client. If the server is missing, install it or set a trusted `server_path`, then run `:CubridRestart`.
+
+In insert mode, use `CTRL-X CTRL-O`, select a candidate with `CTRL-N`, and accept it with `CTRL-Y`. The plugin owns the buffer-local `omnifunc` while its CUBRID client is attached. It restores the previous value on detach unless you changed it. CTRL-Y applies the full supported single-line edit, including text after the cursor. Space or Escape can discard the menu while leaving a native preview suffix in the buffer. Multiline and other unsupported completion items are reported without opening a partial menu.
+
+You can also use a local installation with lazy.nvim. Replace the path with your installation path.
+
+```lua
+{
+  dir = '/absolute/path/to/cubrid.nvim',
+  lazy = false,
+  config = function() require('cubrid').setup({ sql = true }) end,
+}
+```
 
 ## Schema and commands
 

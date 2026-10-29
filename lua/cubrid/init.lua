@@ -1,6 +1,6 @@
 local M = {}
 local completion = require('cubrid.completion')
-local session = { phase = 'idle', buffers = {} }
+local session = { phase = 'idle', buffers = {}, warned = {} }
 local keys = {
   server_path = true, sql = true, parser_worker = true, runtime_prefix = true,
   worker_manifest = true, worker_timeout = true, profile = true, script_mode = true,
@@ -19,7 +19,7 @@ local function parse(options)
   for key in pairs(options) do
     if not keys[key] then error('unknown cubrid option: ' .. tostring(key), 3) end
   end
-  local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', sql = options.sql or false, settings = vim.empty_dict() }
+  local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', sql = options.sql ~= false, settings = vim.empty_dict() }
   if options.sql ~= nil and type(options.sql) ~= 'boolean' then error('sql must be a boolean', 3) end
   local values = result.settings
   if options.parser_worker ~= nil or options.runtime_prefix ~= nil then
@@ -56,6 +56,42 @@ local function eligible(buf)
   return vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype == 'cubrid'
 end
 
+local function warn_once(buf, identity, message)
+  local warned = session.warned[buf] or {}
+  session.warned[buf] = warned
+  if warned[identity] then return end
+  warned[identity] = true
+  vim.notify('cubrid: ' .. message, vim.log.levels.WARN)
+end
+
+local function inspect_filetype(buf)
+  vim.schedule(function()
+    if not session.config or not vim.api.nvim_buf_is_valid(buf) or not vim.api.nvim_buf_is_loaded(buf) then return end
+    local name = vim.api.nvim_buf_get_name(buf)
+    local lower = name:lower()
+    local is_sql = lower:match('%.sql$')
+    local managed = lower:match('%.csql$') or (session.config.sql and is_sql)
+    local ft = vim.bo[buf].filetype
+    if managed and ft ~= '' and ft ~= 'cubrid' then
+      local advice = is_sql and 'Set sql=false for .csql only, or adjust filetype configuration and reopen the file.' or 'Adjust filetype configuration and reopen the file.'
+      warn_once(buf, 'filetype:' .. ft, 'filetype conflict for ' .. name .. ': expected cubrid, observed ' .. ft .. '. A filetype rule or manual setting may override detection. ' .. advice)
+    end
+  end)
+end
+
+local function inspect_clients(buf)
+  vim.schedule(function()
+    if not session.config or not eligible(buf) then return end
+    for _, client in ipairs(vim.lsp.get_clients({ bufnr = buf })) do
+      if client.id ~= session.client then
+        local name = vim.api.nvim_buf_get_name(buf)
+        local advice = name:lower():match('%.sql$') and ' For generic SQL, sql=false enables .csql only.' or ''
+        warn_once(buf, 'client:' .. client.id, 'LSP client ' .. client.name .. ' (id ' .. client.id .. ') is attached to ' .. name .. ' and may overlap completion or diagnostics. Choose one server.' .. advice)
+      end
+    end
+  end)
+end
+
 local function update(client)
   client:notify('workspace/didChangeConfiguration', { settings = { cubrid = session.config.settings } })
 end
@@ -72,7 +108,7 @@ start = function()
   local config = session.config
   if vim.fn.executable(config.server) ~= 1 then
     session.phase = 'failed'
-    notice('language server is not executable: ' .. config.server, vim.log.levels.ERROR)
+    notice('language server is not executable: ' .. config.server .. '. Install cubrid-language-server on Neovim PATH or set trusted server_path, then run :CubridRestart', vim.log.levels.ERROR)
     return
   end
   session.phase = 'starting'
@@ -111,6 +147,7 @@ end
 local function attach(buf)
   if not session.config or not eligible(buf) then return end
   session.buffers[buf] = true
+  inspect_clients(buf)
   if session.phase == 'idle' then start()
   elseif session.phase == 'running' or session.phase == 'starting' then
     local client = vim.lsp.get_client_by_id(session.client)
@@ -156,6 +193,7 @@ function M.setup(options)
     } })
     local group = vim.api.nvim_create_augroup('cubrid', { clear = true })
     vim.api.nvim_create_autocmd('FileType', { group = group, callback = function(args)
+      inspect_filetype(args.buf)
       if eligible(args.buf) then
         attach(args.buf)
       elseif session.buffers[args.buf] then
@@ -164,6 +202,9 @@ function M.setup(options)
         if client then completion.detach(args.buf, client.id); vim.lsp.buf_detach_client(args.buf, client.id) end
       end
     end })
+    vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, { group = group, callback = function(args) inspect_filetype(args.buf) end })
+    vim.api.nvim_create_autocmd('LspAttach', { group = group, callback = function(args) inspect_clients(args.buf) end })
+    vim.api.nvim_create_autocmd('BufWipeout', { group = group, callback = function(args) session.warned[args.buf] = nil end })
     vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) completion.detach(args.buf); session.buffers[args.buf] = nil end })
     vim.api.nvim_create_autocmd('LspDetach', { group = group, callback = function(args) completion.detach(args.buf, args.data.client_id) end })
     vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = function()
@@ -175,6 +216,7 @@ function M.setup(options)
     vim.api.nvim_create_user_command('CubridRestart', function() M.restart() end, {})
   end
   for _, buf in ipairs(vim.api.nvim_list_bufs()) do if eligible(buf) and vim.api.nvim_buf_is_loaded(buf) then session.buffers[buf] = true end end
+  for buf in pairs(session.buffers) do inspect_clients(buf) end
   if previous and previous.server ~= config.server then M.restart()
   elseif session.phase == 'running' then update(vim.lsp.get_client_by_id(session.client))
   elseif session.phase == 'idle' then start() end

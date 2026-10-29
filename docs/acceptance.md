@@ -114,3 +114,25 @@ CUBRID_TEST_DIR="$base/final-profile" "$base/final-installed/tests/run.sh"
 ```
 
 Use new empty extraction and profile directories to repeat the test. The full suite output is `neovim-ownership/final-output.txt`. The independent `menu-visible.lua` probe used the final extracted package and a fresh XDG profile. It recorded `accepted=SELECT '가😀'; SELECT` and `PASS menu suffix replacement` in `neovim-ownership/final-independent/menu-observed.txt`.
+
+## SQL defaults ticket
+
+The selected dispatch is `/home/vimkim/temp/cubrid-nvim-sql-defaults-20261029/decision.md`. The baseline is `4b4c4d9e486f0b02c146d21cb8452b3c45bad754`. The historical central editor contract path in `docs/dispatch.md` was absent in this checkout environment.
+
+On Neovim 0.12.5, `tests/sql-defaults.lua` failed at `SQL enabled by default` against the baseline, then passed after implementation. It exercises default detection and casing, explicit opt-out, invalid setup, pre-setup SQL, a competing autocmd and exact filename override, warning severity and deduplication, configuration at delivery, buffer wipe, and actual foreign LSP clients before and after setup. The foreign client remains attached across an owned restart. `tests/missing-default.lua` exercises a missing PATH executable, one notice per failed attempt, lexical settings, PATH repair and `:CubridRestart`. `tests/missing.lua` covers an explicit missing path and recovery with the real server.
+
+```sh
+CUBRID_TEST_DIR=/tmp/cubrid-sql-full \
+CUBRID_TEST_SERVER=/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server \
+  tests/run.sh
+mkdir -p /tmp/cubrid-sql-artifact-final3/extracted
+scripts/package.sh /tmp/cubrid-sql-artifact-final3/cubrid.nvim.tar.gz
+tar -xzf /tmp/cubrid-sql-artifact-final3/cubrid.nvim.tar.gz -C /tmp/cubrid-sql-artifact-final3/extracted
+CUBRID_TEST_DIR=/tmp/cubrid-sql-artifact-final3/run \
+CUBRID_TEST_SERVER=/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server \
+  /tmp/cubrid-sql-artifact-final3/extracted/tests/run.sh
+```
+
+Use fresh disposable directories on repetition. Output from the extracted package is `/tmp/cubrid-sql-artifact-final3/test.log`. The suite uses the existing read-only native worker and runtime. Only observed detection events and attached clients are reported; silent `noautocmd` overrides are outside the contract. Lower Neovim versions and other platforms were not tested.
+
+The final archive SHA-256 is `dc1ca38e1e52f1067f13429f14c1c7da3b7bb7076674639443c8634ee2c30b87`. The archive contains README files, license, runtime files, help and tests. Historical `docs/design.md` and `docs/dispatch.md` describe the earlier alpha and are superseded for this ticket by the selected dispatch above.

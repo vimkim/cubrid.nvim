@@ -6,7 +6,7 @@ Read `docs/spec.md` and the coordinator's exact dispatch before implementation.
 
 This project owns Neovim file detection, lexical highlighting, indentation, editor settings, native LSP lifecycle, packaging, and editor tests.
 Use the shared stdio server for completion and diagnostics. Never execute submitted SQL or duplicate its completion/parser implementation.
-Keep `.sql` associations opt-in. Use `cubrid` as the filetype and `.csql` as the default extension.
+Use `cubrid` as the filetype for `.sql` and `.csql` by default. Support `sql = false` for `.csql` only.
 Executable and native runtime settings come from trusted Lua setup. Project files cannot select commands.
 
 Use one fresh-context implementer and isolated worktree per bounded ticket. Use TDD at public interfaces and verify the real headless editor.

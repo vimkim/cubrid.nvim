@@ -2,7 +2,7 @@
 
 [English](README.en.md) | 한국어
 
-이 플러그인은 `.csql` 파일에 구문 색상과 들여쓰기를 적용하고, 별도로 설치한 CUBRID 언어 서버로 자동 완성과 진단을 제공합니다. SQL을 실행하거나 데이터베이스에 접속하지 않습니다. Neovim 0.12.5에서 테스트했습니다.
+이 플러그인은 `.sql`과 `.csql` 파일에 구문 색상과 들여쓰기를 적용하고, 별도로 설치한 CUBRID 언어 서버로 자동 완성과 진단을 제공합니다. SQL을 실행하거나 데이터베이스에 접속하지 않습니다. Neovim 0.12.5에서 테스트했습니다.
 
 ## 로컬 설치
 
@@ -17,6 +17,7 @@ Neovim을 시작하고 `:helptags ALL`을 실행하여 도움말을 색인합니
 
 ```lua
 require('cubrid').setup({
+  sql = true, -- 기본값
   server_path = '/absolute/path/to/cubrid-language-server',
   parser_worker = '/absolute/path/to/parser-worker',
   runtime_prefix = '/absolute/path/to/cubrid/runtime',
@@ -25,7 +26,25 @@ require('cubrid').setup({
 
 서버 경로를 생략하면 Neovim 프로세스의 `PATH`에서 `cubrid-language-server`를 찾습니다. `parser_worker`와 `runtime_prefix`는 함께 지정합니다. 지정하지 않으면 런타임 부재 진단이 표시되지만 키워드 자동 완성은 사용할 수 있습니다. 서버와 네이티브 런타임은 별도로 설치해야 합니다. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요.
 
-`.sql` 파일도 사용하려면 `sql = true`를 설정하고 파일을 다시 엽니다. 기존 SQL 파일 형식은 기본적으로 유지됩니다. 삽입 모드에서 `CTRL-X CTRL-O`를 누르고 `CTRL-N`으로 항목을 선택한 다음 `CTRL-Y`로 적용합니다. CUBRID 클라이언트가 연결된 동안 플러그인이 버퍼의 `omnifunc`를 사용합니다. 연결이 끝나면 이전 값을 복원하며, 사용자가 바꾼 값은 유지합니다. CTRL-Y는 커서 뒤의 텍스트를 포함하여 지원하는 한 줄 편집의 전체 범위를 적용합니다. Space나 Escape로 메뉴를 닫으면 Neovim의 미리보기 접미사가 버퍼에 남을 수 있습니다. 여러 줄 편집과 그 밖의 지원하지 않는 완성 항목은 알림으로 표시하며 부분 메뉴를 열지 않습니다.
+`.sql`과 `.csql`은 기본적으로 `cubrid` 파일 형식으로 감지됩니다. `.csql`만 사용하려면 다음 설정을 사용하세요. 기존 버퍼는 다시 열어야 합니다.
+
+```lua
+require('cubrid').setup({ sql = false })
+```
+
+다른 파일 형식이나 LSP 클라이언트가 감지되면 경고합니다. 서버가 없으면 설치하거나 신뢰하는 `server_path`를 설정한 뒤 `:CubridRestart`를 실행하세요.
+
+삽입 모드에서 `CTRL-X CTRL-O`를 누르고 `CTRL-N`으로 항목을 선택한 다음 `CTRL-Y`로 적용합니다. CUBRID 클라이언트가 연결된 동안 플러그인이 버퍼의 `omnifunc`를 사용합니다. 연결이 끝나면 이전 값을 복원하며, 사용자가 바꾼 값은 유지합니다. CTRL-Y는 커서 뒤의 텍스트를 포함하여 지원하는 한 줄 편집의 전체 범위를 적용합니다. Space나 Escape로 메뉴를 닫으면 Neovim의 미리보기 접미사가 버퍼에 남을 수 있습니다. 여러 줄 편집과 그 밖의 지원하지 않는 완성 항목은 알림으로 표시하며 부분 메뉴를 열지 않습니다.
+
+Lazy.nvim에서 로컬 설치를 사용할 수도 있습니다. 경로를 실제 위치로 바꾸세요.
+
+```lua
+{
+  dir = '/absolute/path/to/cubrid.nvim',
+  lazy = false,
+  config = function() require('cubrid').setup({ sql = true }) end,
+}
+```
 
 ## 스키마와 명령
 

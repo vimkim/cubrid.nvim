@@ -5,9 +5,9 @@ local function wait(f, msg) assert(vim.wait(12000, f, 50), msg) end
 vim.cmd('filetype plugin indent on')
 local cubrid = require('cubrid')
 cubrid.setup({server_path = '/missing/cubrid-language-server'})
-vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/missing.csql'))
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/missing.sql'))
 wait(function() return #notes > 0 end, 'missing server notice')
-assert(notes[1]:find('not executable', 1, true), 'missing executable reported')
+assert(notes[1]:find('/missing/cubrid-language-server', 1, true) and notes[1]:find('server_path', 1, true) and notes[1]:find(':CubridRestart', 1, true), 'actionable missing executable reported')
 cubrid.setup({server_path = (vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server')})
 wait(function() return #vim.lsp.get_clients({name = 'cubrid'}) == 1 and vim.lsp.get_clients({name = 'cubrid'})[1].initialized end, 'retry with valid server')
 local client = vim.lsp.get_clients({name = 'cubrid'})[1]

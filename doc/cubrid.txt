@@ -11,7 +11,8 @@ raise an error and leave the last valid settings in effect.
 
 server_path       Absolute server executable. Omit to use
                   cubrid-language-server on the editor host's PATH.
-sql               Set true to associate .sql with cubrid. Default false.
+sql               Associate .sql with cubrid. Default true; false keeps
+                  .csql only. Reopen existing files after changing it.
 parser_worker     Absolute path to the qualified native worker.
 runtime_prefix    Absolute path to its matching runtime. Set both paths.
 worker_manifest   Optional absolute manifest path. Requires the native pair.
@@ -21,6 +22,10 @@ script_mode       "sql" or "csql".
 config_path       Absolute metadata configuration path.
 schema_snapshot   Omit to inherit project metadata, use vim.NIL to disable,
                   or set an absolute snapshot path.
+
+The plugin warns about observed conflicting filetypes and attached foreign LSP
+clients. It does not change their state. If the server is missing, install it
+on Neovim PATH or set server_path, then run :CubridRestart.
 
 Explicit executable paths come only from this Lua configuration. The plugin
 starts one server using an argv array and shares it across CUBRID buffers.
