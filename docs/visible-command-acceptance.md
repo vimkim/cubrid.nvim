@@ -7,3 +7,5 @@ The native PTY test first failed on baseline `5ee3b019ff1dfda5c28b04fb7ac7101115
 Evidence paths and limitations are recorded in [acceptance.md](acceptance.md#visible-csql-command-entry-n642).
 
 Independent review found no production prompt defect and no added explanatory comments. It reproduced a test-runner false positive when an old receipt survived a later failed editor process. The runner now requires an empty test directory and a successful Neovim exit. The coordinator's native test passed in `/tmp/cubrid-visible-command-X42si2/independent-native-final`, and the old receipt directory was rejected immediately. The negative receipt check is `/tmp/cubrid-visible-command-X42si2/rejected-stale-marker.log`.
+
+The final coordinator archive in `/tmp/cubrid-visible-command-X42si2/final-package` matched all 53 packaged source files. Its extracted plugin passed 25 portable cases, four schema flows, and the native command-visibility test after the runner correction. Per-case results are under `final-package/checks`, and `final-checks.json` records the completed matrix.
