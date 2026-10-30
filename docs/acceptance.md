@@ -4,14 +4,14 @@
 
 This report preserves results at their recorded plugin and engine commits. Historical commands and local paths describe those runs. They are not a claim that those temporary environments or published archives contain current main.
 
-The current [core coverage reference](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.en.md) describes `bounded-query-dml-schema-engineer-ordered-v4`, at core commit `057e41b0c02d85d09905301f6bfccbb7ed0b8965`. Using that coverage requires the matching core, worker, manifest, and qualified runtime described in the [installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md). This documentation update does not upgrade the existing PATH installation or native assets and adds no v4 Neovim acceptance run.
+The current [core coverage reference](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.en.md) describes `bounded-query-dml-schema-engineer-ordered-v4`, at core commit `057e41b0c02d85d09905301f6bfccbb7ed0b8965`. Using that coverage requires the matching core, worker, manifest, and qualified runtime described in the [installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md). The schema-connection checks below verify catalog acquisition and completion. They do not upgrade the existing PATH installation or native assets, or qualify additional v4 syntax coverage.
 
 The evidence has separate scopes:
 
 - [Dependency warnings, N631](dependency-warnings-ticket.md) verifies WARN install guidance, prerequisite discovery, completion during native unavailability, and recovery on Neovim 0.12.5 with core `ad9d9434f6f8d74b8c44d9cadba0faf2362e6606`. Its focused native check uses a matching v4 worker. It does not requalify the full native coverage matrix.
 - [Packaged Blink and LazyVim verification](#independent-packaged-blink-and-lazyvim-verification) used plugin `12feab90dfaae8ce4ca49d45ed8dec6cc875dea7` runtime files and engine `8b1226c8f10686eb29d13d86cdda793df71d6645`. It verified SHOW and hint authoring in isolated profiles with the earlier native inputs. It did not verify v4 or the full personal profile.
 - [Approved SHOW/hint integration](#approved-showhint-integration-after-concurrent-ci) records the extracted portable and native suite results for that integration. Its test totals and unchanged-native-coverage statement refer to that earlier engine.
-- The [portable workflow](../.github/workflows/ci.yml) pins core `c2fe7c63e214fea42fdc2f8ee047085b4173c3d8` for schema connections. It does not establish v4 native success. Earlier portable results retain their recorded engine identity.
+- The [portable workflow](../.github/workflows/ci.yml) pins core `6be5d558efce6e5045d8f7122d4532e4e975192f` for schema connections, including bounded stdout publication. It does not establish v4 native success. Earlier portable results retain their recorded engine identity.
 - Older personal-profile checks remain evidence only for their recorded configurations and commits. No personal Neovim profile was changed or retested for this documentation update.
 
 Neovim 0.12.5 on Linux remains the tested platform. Other versions and platforms require their own checks. Current configuration instructions are in the [English README](../README.en.md) and [Korean README](../README.md).
@@ -33,7 +33,17 @@ tests/run-portable.sh
 
 The extracted package passed the complete portable suite in `/tmp/cubrid-nvim-schema-package-v6-check` on Neovim 0.12.5. The package was `/tmp/cubrid-nvim-schema-package-v6.tar.gz`, SHA-256 `a2711ea341729517b09e4f2b6b0543ea0171dc217d70fd12d4b75f9842c19e49`. The editable core tree was at `1beb47a`, whose production code matches `c2fe7c63e214fea42fdc2f8ee047085b4173c3d8`. Package inventory verification matched all 51 files to the task checkout. The setup restoration regression failed before the clear barrier and passed after it. A fixture PID publication race and an asynchronous status assertion were corrected during package verification.
 
-The suite requires an exporter and fails when it is missing. The workflow pins the local core commit `c2fe7c63e214fea42fdc2f8ee047085b4173c3d8`, which includes `cubrid-schema` and the `schemaConfigured` reload result. The core commit must be published before the plugin workflow can fetch it. Earlier Neovim versions and non-POSIX process cleanup are unverified.
+The suite requires an exporter and fails when it is missing. The workflow pins the local core commit `6be5d558efce6e5045d8f7122d4532e4e975192f`, which includes `cubrid-schema`, the `schemaConfigured` reload result, and bounded stdout publication. The core commit must be published before the plugin workflow can fetch it. Earlier Neovim versions and non-POSIX process cleanup are unverified.
+
+### Coordinator verification with the corrected exporter
+
+The coordinator reran the source-matched extracted archive against corrected core production commit `6be5d558efce6e5045d8f7122d4532e4e975192f`. All 25 portable cases and four schema flows passed. The archive is `/tmp/cubrid-schema-implementation-EMmkLi/final-plugin/cubrid.nvim.tar.gz`, SHA-256 `a2711ea341729517b09e4f2b6b0543ea0171dc217d70fd12d4b75f9842c19e49`. Its 51 packaged files match the checkout. Per-case receipts are under `final-plugin/checks`, with the complete output in `final-plugin/checks.log`. Only the CI dependency pin and this acceptance record changed after runtime commit `f5018d73ede2ac279cdab3bb7c6fa11c8477eb15`.
+
+An independent read-only review passed the actual headless exporter/LSP flow. A separate probe delayed an old connection's publish-reload callback until after another connection was ready. Releasing it preserved the second connection's names. The rerunnable probe and result are `/tmp/cubrid-schema-implementation-EMmkLi/review-nvim/run-reload-race.sh` and `review-nvim/reload-race/result`.
+
+The complete real chain also passed on Neovim 0.12.5 and a dedicated CUBRID `11.5.0.2635 debug_gcc` client/server environment. Native command and password prompts drove the actual plugin, LSP, exporter, and CSQL binary. DBA received `schema_people`, `schema_people_view`, and the expected alias columns. `SCHEMA_READER` received only its granted `DBA.schema_people` and columns. Switch removed the old snapshot. Disconnect removed both qualified and unqualified live names and the private snapshot directory. File mode was 0600 and directory mode was 0700. The editor buffer's DDL left the fixture intact.
+
+Rerun instructions and the isolated probe are `/tmp/cubrid-schema-implementation-EMmkLi/native-editor-verify/README.md`. The final observed result is `native-editor-verify/native-flow-run-v20_1igu/result.json`. The first coordinator probe incorrectly read a status notification before its scheduled callback ran. A two-prompt control ruled out input handling; waiting for the new status notification corrected the probe. This was a test-driver issue. Native syntax diagnostics were unavailable in that disposable environment because no parser worker was configured. The verdict covers schema acquisition and completion.
 
 ## Baselines and host
 
