@@ -16,12 +16,26 @@ function M.resolve(config)
   local result = { server = selected ~= '' and (vim.uv.fs_realpath(selected) or selected) or config.server,
     server_source = config.server == 'cubrid-language-server' and 'PATH' or 'setup', settings = vim.deepcopy(config.settings) }
   if vim.fn.executable(result.server) ~= 1 then
+    result.error_kind = 'server'
     result.error = 'Language server is not executable. Install cubrid-language-server on PATH or set server_path.'
     return result
   end
+  result.error_kind = 'native'
   if result.settings.parserWorker then
     result.native = { parserWorker = result.settings.parserWorker, runtimePrefix = result.settings.runtimePrefix, workerManifest = result.settings.workerManifest }
     result.native_source = 'setup'
+    local worker = result.native.parserWorker
+    local manifest = result.native.workerManifest or vim.fn.fnamemodify(worker, ':h') .. '/manifest.json'
+    local runtime = result.native.runtimePrefix
+    if vim.fn.executable(worker) ~= 1 then
+      result.error = 'Native parser-worker is missing or not executable: ' .. worker .. '.'
+    elseif not read_json(manifest, 4 * 1024 * 1024) then
+      result.error = 'Native manifest is missing or invalid: ' .. manifest .. '.'
+    elseif type(runtime) ~= 'string' or not vim.uv.fs_stat(runtime) or vim.uv.fs_stat(runtime).type ~= 'directory' then
+      result.error = 'Native runtime is missing or invalid: ' .. tostring(runtime) .. '.'
+    else
+      result.error_kind = nil
+    end
     return result
   end
   local prefix = vim.fn.fnamemodify(result.server, ':h:h')
@@ -81,6 +95,7 @@ function M.resolve(config)
   end
   result.native = { parserWorker = worker, workerManifest = manifest, runtimePrefix = runtime }
   result.native_source = paths[1]
+  result.error_kind = nil
   for key, value in pairs(result.native) do result.settings[key] = value end
   return result
 end

@@ -35,7 +35,7 @@ See the [LazyVim plugin configuration](https://www.lazyvim.org/configuration/plu
 
 The plugin finds `cubrid-language-server` on Neovim's `PATH`. For a local source installation made with `just sync`, it reads the installed package metadata and looks for `native/parser-worker/build/parser-worker` under the recorded source directory. It reads `runtimePrefix` from the adjacent `manifest.json`. `just sync` does not build the native worker. See the [shared engine installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md).
 
-For a wheel or index installation, or if the local native build is gone, set both `parser_worker` and `runtime_prefix` to absolute paths in trusted Lua setup. You can also set an absolute `server_path`. If discovery fails, keyword completion remains available and the server reports the missing runtime. Run `:CubridDoctor` or `:checkhealth cubrid` to inspect the installation and a private native diagnostic probe.
+For a wheel or index installation, or if the local native build is gone, set both `parser_worker` and `runtime_prefix` to absolute paths in trusted Lua setup. You can also set an absolute `server_path`. On activation, missing server or native prerequisites produce a warning with the GitHub installation guide and retry steps. If discovery fails, strict syntax diagnostics are unavailable while keyword completion remains available. Unchanged failures do not repeat across buffers or settings updates. After repair, run `:CubridRestart` to retry. Run `:CubridDoctor` or `:checkhealth cubrid` to inspect the installation and a private native diagnostic probe.
 
 If the server is not on `PATH`, set its absolute `server_path` in `opts`. For example:
 

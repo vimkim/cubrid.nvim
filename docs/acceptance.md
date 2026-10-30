@@ -8,6 +8,7 @@ The current [core coverage reference](https://github.com/vimkim/cubrid-language-
 
 The evidence has separate scopes:
 
+- [Dependency warnings, N631](dependency-warnings-ticket.md) verifies WARN install guidance, prerequisite discovery, completion during native unavailability, and recovery on Neovim 0.12.5 with core `ad9d9434f6f8d74b8c44d9cadba0faf2362e6606`. Its focused native check uses a matching v4 worker. It does not requalify the full native coverage matrix.
 - [Packaged Blink and LazyVim verification](#independent-packaged-blink-and-lazyvim-verification) used plugin `12feab90dfaae8ce4ca49d45ed8dec6cc875dea7` runtime files and engine `8b1226c8f10686eb29d13d86cdda793df71d6645`. It verified SHOW and hint authoring in isolated profiles with the earlier native inputs. It did not verify v4 or the full personal profile.
 - [Approved SHOW/hint integration](#approved-showhint-integration-after-concurrent-ci) records the extracted portable and native suite results for that integration. Its test totals and unchanged-native-coverage statement refer to that earlier engine.
 - The [portable workflow](../.github/workflows/ci.yml) pins core `2a8842c45c4fb219e322afd731c27937a107324f`. It does not establish v4 native success. Local portable results below retain that exact engine identity.

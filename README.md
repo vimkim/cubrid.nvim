@@ -35,7 +35,7 @@ return {
 
 플러그인은 Neovim의 `PATH`에서 `cubrid-language-server`를 찾습니다. 로컬 소스에서 `just sync`로 설치한 패키지의 메타데이터를 읽고 기록된 소스 디렉터리의 `native/parser-worker/build/parser-worker`를 찾습니다. 인접한 `manifest.json`의 `runtimePrefix`에서 런타임 경로를 읽습니다. `just sync`는 네이티브 워커를 빌드하지 않습니다. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요.
 
-휠이나 패키지 인덱스에서 설치했거나 로컬 네이티브 빌드가 없다면 신뢰하는 Lua 설정에 절대 경로 `parser_worker`와 `runtime_prefix`를 함께 지정하세요. 절대 경로 `server_path`도 지정할 수 있습니다. 검색에 실패하면 키워드 자동 완성은 사용할 수 있으며 서버가 런타임 부재를 진단합니다. `:CubridDoctor` 또는 `:checkhealth cubrid`로 설치와 네이티브 진단을 확인하세요.
+휠이나 패키지 인덱스에서 설치했거나 로컬 네이티브 빌드가 없다면 신뢰하는 Lua 설정에 절대 경로 `parser_worker`와 `runtime_prefix`를 함께 지정하세요. 절대 경로 `server_path`도 지정할 수 있습니다. 활성화 시 서버나 네이티브 필수 파일이 없으면 GitHub 설치 안내와 재시도 방법을 경고로 표시합니다. 검색에 실패하면 엄격한 구문 진단은 사용할 수 있지만 키워드 자동 완성은 계속 사용할 수 있습니다. 같은 오류는 버퍼나 설정이 갱신되어도 반복하지 않습니다. 설치나 경로를 수정한 뒤 `:CubridRestart`로 다시 시도하세요. `:CubridDoctor` 또는 `:checkhealth cubrid`로 설치와 네이티브 진단을 확인하세요.
 
 서버가 `PATH`에 없다면 `opts`의 `server_path`에 절대 경로를 지정하세요. 예를 들면 다음과 같습니다.
 

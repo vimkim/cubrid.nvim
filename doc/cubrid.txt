@@ -76,7 +76,12 @@ schema_snapshot   Omit to inherit project metadata, use vim.NIL to disable,
 
 The plugin warns about observed conflicting filetypes and attached foreign LSP
 clients. It does not change their state. If the server is missing, install it
-on Neovim PATH or set server_path, then run :CubridRestart.
+on Neovim PATH or set server_path, then run :CubridRestart. Missing server
+and native prerequisites produce WARN notifications with the GitHub installation
+guide and retry steps. Native failures leave keyword completion available while
+strict syntax diagnostics are unavailable. Unchanged failures do not repeat
+across buffers or settings updates. Repair the paths and run :CubridRestart.
+With auto_start=false, these checks wait until the LSP configuration is enabled.
 
 Executable selection comes only from trusted setup or native Lua configuration.
 Neovim owns activation and server processes. The default configuration shares

@@ -1,0 +1,40 @@
+local dir = assert(vim.env.CUBRID_TEST_DIR)
+local server = assert(vim.env.CUBRID_TEST_SERVER)
+local worker = assert(vim.env.CUBRID_TEST_WORKER)
+local runtime = assert(vim.env.CUBRID_TEST_RUNTIME)
+local notes = {}
+vim.notify = function(message, level) notes[#notes + 1] = { message = message, level = level } end
+local function wait(predicate, message) assert(vim.wait(15000, predicate, 20), message) end
+local function diagnostic(code)
+  for _, item in ipairs(vim.diagnostic.get(0)) do if item.code == code then return true end end
+end
+vim.cmd('filetype plugin indent on')
+local cubrid = require('cubrid')
+local setup = { auto_start = false, server_path = server,
+  parser_worker = dir .. '/ignored-worker', runtime_prefix = dir .. '/ignored-runtime' }
+cubrid.setup(setup)
+vim.lsp.config('cubrid', { cmd = { server }, settings = { cubrid = { parserWorker = worker, runtimePrefix = runtime } } })
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/native.sql'))
+vim.api.nvim_buf_set_lines(0, 0, -1, false, { 'SELECT ,;' })
+vim.lsp.enable('cubrid')
+wait(function() return diagnostic('CUBRID-S1001') end, 'available native overrides produce real syntax diagnostics')
+assert(#notes == 0, 'available dependencies produce no warning and override missing setup paths')
+vim.lsp.config('cubrid', { settings = { cubrid = { parserWorker = dir .. '/missing-worker' } } })
+cubrid.setup(setup)
+wait(function() return #notes == 1 and diagnostic('CUBRID-T1001') end, 'native override failure warns and retains server diagnostics')
+assert(notes[1].level == vim.log.levels.WARN and notes[1].message:find('/missing-worker', 1, true), 'native setting warning names effective worker')
+cubrid.setup(setup)
+vim.wait(100)
+assert(#notes == 1, 'repeated native override does not duplicate warning')
+vim.lsp.config('cubrid', { settings = { cubrid = { parserWorker = worker } } })
+cubrid.setup(setup)
+wait(function() return diagnostic('CUBRID-S1001') end, 'native override recovery restores strict diagnostics')
+assert(#notes == 1, 'native recovery is silent')
+vim.lsp.config('cubrid', { settings = { cubrid = { parserWorker = dir .. '/missing-worker' } } })
+cubrid.setup(setup)
+wait(function() return #notes == 2 end, 'same failure can warn again after real recovery')
+vim.lsp.enable('cubrid', false)
+wait(function() return #vim.lsp.get_clients({ name = 'cubrid' }) == 0 end, 'native client exits')
+vim.fn.writefile({ vim.json.encode(notes) }, dir .. '/dependency-notices.json')
+print('PASS available native dependencies, overrides, and recovery')
+vim.cmd('qa!')

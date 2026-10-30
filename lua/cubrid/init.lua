@@ -63,6 +63,22 @@ local function notice(message, level)
   vim.schedule(function() vim.notify('cubrid: ' .. message, level or vim.log.levels.INFO) end)
 end
 
+local function dependency_notice(resolved)
+  if not resolved.error then session.dependency_error = nil; return end
+  local identity = resolved.error_kind .. ':' .. resolved.server .. ':' .. resolved.error
+  if session.dependency_error == identity then return end
+  session.dependency_error = identity
+  local guide = 'https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md'
+  if resolved.error_kind == 'server' then
+    notice('Install cubrid-language-server using ' .. guide .. '. Missing or non-executable: ' .. resolved.server
+      .. '. Add it to Neovim PATH or set trusted server_path (or vim.lsp.config cmd), then run :CubridRestart.', vim.log.levels.WARN)
+  else
+    notice('Strict syntax diagnostics are unavailable; keyword completion can continue.'
+      .. ' Install parser-worker with its matching runtime and manifest using ' .. guide .. '. ' .. resolved.error
+      .. ' Repair discovery or set trusted parser_worker and runtime_prefix (worker_manifest if needed), then run :CubridRestart.', vim.log.levels.WARN)
+  end
+end
+
 local function eligible(buf)
   return vim.api.nvim_buf_is_valid(buf) and vim.api.nvim_buf_is_loaded(buf) and vim.bo[buf].filetype == 'cubrid'
 end
@@ -126,6 +142,7 @@ local function update(client)
   local config = vim.lsp.config.cubrid
   local resolved = resolve(config, previous and previous.server)
   if previous then resolved.server_source = previous.server_source end
+  dependency_notice(resolved)
   client.config._cubrid_active = resolved
   client.settings = vim.deepcopy(config.settings or {})
   client.settings.cubrid = resolved.settings
@@ -141,6 +158,7 @@ function M.restart()
   if session.restarting then return end
   session.restarting = true
   session.failed = nil
+  session.dependency_error = nil
   local owned = clients()
   vim.lsp.enable('cubrid', false)
   for _, client in ipairs(owned) do
@@ -195,6 +213,7 @@ end
 
 default_cmd = function(dispatchers, config)
   local resolved = resolve(config)
+  dependency_notice(resolved)
   config._cubrid_active = resolved
   return vim.lsp.rpc.start({ resolved.server }, dispatchers, { cwd = config.cmd_cwd, env = config.cmd_env, detached = config.detached })
 end
@@ -202,6 +221,15 @@ end
 function M.lsp_config()
   register()
   local available = not session.failed and vim.fn.executable(resolve().server) == 1
+  -- Inspect the merged native configuration after Neovim finishes loading it.
+  vim.schedule(function()
+    if not vim.lsp.is_enabled('cubrid') then return end
+    local config = vim.lsp.config.cubrid
+    local resolved = resolve(config)
+    if config.cmd == default_cmd or type(config.cmd) == 'table' or resolved.error_kind ~= 'server' then
+      dependency_notice(resolved)
+    end
+  end)
   return {
     cmd = default_cmd,
     filetypes = { 'cubrid' },
@@ -211,9 +239,9 @@ function M.lsp_config()
       if session.failed or session.restarting then return end
       local config = vim.lsp.config.cubrid
       local resolved = resolve(config)
-      if config.cmd == default_cmd and vim.fn.executable(resolved.server) ~= 1 then
+      if (config.cmd == default_cmd or type(config.cmd) == 'table') and resolved.error_kind == 'server' then
         session.failed = true
-        notice('language server is not executable: ' .. resolved.server .. '. Install cubrid-language-server on Neovim PATH or set trusted server_path, then run :CubridRestart', vim.log.levels.ERROR)
+        dependency_notice(resolved)
         return
       end
       completion.prepare(buf)
@@ -221,6 +249,7 @@ function M.lsp_config()
     end,
     before_init = function(params, config)
       local resolved = config._cubrid_active or resolve(config)
+      if resolved.error_kind ~= 'server' then dependency_notice(resolved) end
       config._cubrid_active = resolved
       config.settings.cubrid = vim.deepcopy(resolved.settings)
       config.init_options = vim.deepcopy(config.init_options or {})

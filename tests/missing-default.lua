@@ -1,7 +1,7 @@
 local dir = assert(vim.env.CUBRID_TEST_DIR)
 local server = vim.env.CUBRID_TEST_SERVER or '/home/vimkim/gh/cubrid-language-tools/.venv/bin/cubrid-language-server'
 local notes = {}
-vim.notify = function(message) table.insert(notes, message) end
+vim.notify = function(message, level) table.insert(notes, message); notes.level = level end
 local old_path = vim.env.PATH
 vim.env.PATH = dir .. '/empty-path'
 vim.fn.mkdir(vim.env.PATH, 'p')
@@ -10,6 +10,8 @@ require('cubrid').setup()
 vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/default-missing.sql'))
 assert(vim.wait(3000, function() return #notes > 0 end), 'missing PATH notice')
 assert(vim.bo.filetype == 'cubrid' and vim.bo.indentexpr ~= '', 'lexical support remains')
+assert(notes.level == vim.log.levels.WARN, 'missing server uses warning severity')
+assert(notes[1]:find('Install', 1, true) and notes[1]:find('https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md', 1, true), 'missing server asks for installation with GitHub guide')
 assert(notes[1]:find('cubrid-language-server', 1, true) and notes[1]:find('PATH', 1, true) and notes[1]:find('server_path', 1, true) and notes[1]:find(':CubridRestart', 1, true), 'actionable notice')
 vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/default-missing-2.sql'))
 vim.wait(200)
