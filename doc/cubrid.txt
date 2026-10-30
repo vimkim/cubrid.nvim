@@ -167,8 +167,9 @@ LIVE SCHEMA                                                *cubrid-live-schema*
 Install a shared language-tools version containing cubrid-schema and put it
 and csql on PATH, or set their absolute paths in trusted Lua. Run
 :CubridConnect in a CUBRID buffer. Enter a command such as
-csql -udba demodb@localhost -C, then a password. Both prompts are hidden and
-excluded from input history. An empty command or Escape cancels the selection.
+csql -udba demodb@localhost -C, then a password. The command is visible while
+you edit it; the separate password prompt masks its input. An inline -p password
+is visible, so prefer the separate password prompt. Neither enters input history. An empty command or Escape cancels the selection.
 An empty password uses the inline password, if any. The exporter receives the
 request through stdin. CSQL receives its password as a transient process
 argument. The exporter runs fixed catalog queries, never the buffer SQL.

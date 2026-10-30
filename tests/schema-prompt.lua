@@ -3,7 +3,7 @@ local server = assert(vim.env.CUBRID_TEST_SERVER)
 local function wait(fn, message) assert(vim.wait(10000, fn, 20), message) end
 local prompts = 0
 vim.api.nvim_create_autocmd('CmdlineEnter', { callback = function()
-  if vim.fn.getcmdtype() == '-' then
+  if vim.fn.getcmdtype() == '@' then
     prompts = prompts + 1
     vim.defer_fn(function() vim.api.nvim_input('\r') end, 20)
   end

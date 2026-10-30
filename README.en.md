@@ -127,7 +127,7 @@ Neovim 0.12.5 on Linux is the tested platform. The plugin suite does not verify 
 
 ## Connect for schema completion
 
-Install a shared language-tools version that includes `cubrid-schema`, and make it and CSQL available on Neovim's `PATH`. Open a CUBRID buffer and run `:CubridConnect`. Enter a command such as `csql -udba demodb@localhost -C`, then enter the password. Both prompts hide their input. An empty command or Escape cancels the selection. An empty password uses an inline password if supplied, or no password. The command and password do not enter input history or Ex history.
+Install a shared language-tools version that includes `cubrid-schema`, and make it and CSQL available on Neovim's `PATH`. Open a CUBRID buffer and run `:CubridConnect`. Enter a command such as `csql -udba demodb@localhost -C`, then enter the password. The command is visible while you edit it; the separate password prompt masks its input. An inline `-p` password is visible, so prefer the separate password prompt. An empty command or Escape cancels the selection. An empty password uses an inline password if supplied, or no password. The command and password do not enter input history or Ex history.
 
 The exporter accepts supported CSQL connection options and runs its own fixed catalog queries. It does not run SQL from the buffer. The exporter request is sent on standard input. CSQL receives its password as a transient process argument. Use an appropriate local host and account for your environment.
 

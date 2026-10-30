@@ -355,3 +355,11 @@ The approved rebase retains the documentation and CI changes through `8e9f200e88
 The existing package verifier first rejected `lsp/cubrid.lua`. Commit `ddad76a` adds `lsp` to its source inventory. The red and green logs are in `/home/vimkim/temp/cubrid-show-hints-606-yszqo6t9/evidence/integration/`. The verified archive SHA-256 is `438c48a890e01575b262176279ed2aa2e04571bf58232a50ac1f176549c96386`.
 
 The extracted package passed 21 portable and six native cases using the current engine task server and read-only qualified native inputs. A separate extracted portable run passed all 21 cases with the existing CI server built from core `2a8842c45c4fb219e322afd731c27937a107324f`. Logs, per-case receipts, process-exit receipts, and `checks.json` are under that integration directory. The current engine also passed its complete 120 core, 34 LSP, 46 native-parser and seven native LSP tests. Independent integration review found no blocking issue. These local results do not claim hosted CI coverage or native success from the portable workflow.
+
+## Visible CSQL command entry (N642)
+
+The task starts at `5ee3b019ff1dfda5c28b04fb7ac7101115fa41e3`. On Neovim 0.12.5, the native terminal regression failed on the baseline because the command text was masked. The failure is in `/tmp/n642-red2.log` and the terminal capture is `/tmp/n642-red2/terminal.log`. The same test passed after the prompt change, with its terminal capture in `/tmp/n642-green3/terminal.log`.
+
+The test drives the public connection command through a PTY. It observes command text and password stars, checks exact indexed input and Ex history before and after, and exercises Enter, Escape, and Ctrl-C. It uses the isolated server and exporter under `/tmp/cubrid-schema-implementation-EMmkLi/venv/bin` and a controlled CSQL fixture. It does not start a database or real CSQL. The existing schema flow checks connection, refresh, disconnect, credentials, and status redaction.
+
+The package at `/tmp/n642-package/cubrid.nvim.tar.gz` was extracted and compared to the source files before running `tests/run-portable.sh`. The isolated profile and suite output are under `/tmp/n642-package/profile` and `/tmp/n642-package/portable.log`. These checks cover the local Neovim version; other versions and third-party command-line autocmd interactions remain unverified.

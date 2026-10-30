@@ -224,15 +224,21 @@ local function connect(client, command, password)
   clear_then_acquire(client, session)
 end
 
-local function secret(prompt_text)
-  local aborted = false
+local function prompt_text(role, label)
+  local command = role == 'command'
+  local aborted, captured, cleared = false, nil, false
   local autocmd = vim.api.nvim_create_autocmd('CmdlineLeave', { callback = function()
-    if vim.v.event.cmdtype == '-' then aborted = vim.v.event.abort end
+    if vim.v.event.cmdtype ~= (command and '@' or '-') or vim.fn.getcmdprompt() ~= label then return end
+    aborted = vim.v.event.abort
+    if command then
+      captured = vim.fn.getcmdline()
+      cleared = vim.fn.setcmdline('') == 0
+    end
   end })
-  local ok, value = pcall(vim.fn.inputsecret, prompt_text)
+  local ok, value = pcall(command and vim.fn.input or vim.fn.inputsecret, label)
   vim.api.nvim_del_autocmd(autocmd)
-  if not ok or aborted then return nil end
-  return value
+  if not ok or aborted or (command and not cleared) then return nil end
+  return command and captured or value
 end
 
 local function prompt(client)
@@ -242,9 +248,9 @@ local function prompt(client)
     return epoch == current_epoch and tokens[client.id] == token
       and vim.lsp.get_client_by_id(client.id) == client and not client:is_stopped()
   end
-  local command = secret('CSQL command (hidden, for example csql -udba demodb -C; empty cancels): ')
+  local command = prompt_text('command', 'CSQL command (for example csql -udba demodb -C; empty cancels): ')
   if not command or command == '' or not current() then return end
-  local password = secret('Password (empty uses the command password or no password): ')
+  local password = prompt_text('password', 'Password (empty uses the command password or no password): ')
   if password == nil or not current() then return end
   connect(client, command, password ~= '' and password or nil)
 end

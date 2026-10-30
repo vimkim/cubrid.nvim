@@ -93,6 +93,9 @@ printf 'running real exporter schema flow\n'
 export CUBRID_TEST_DIR="$testroot/schema-prompt" CUBRID_SCHEMA_CASE=schema-prompt
 printf 'running schema prompt\n'
 "$root/tests/run-schema-flow.sh"
+export CUBRID_TEST_DIR="$testroot/visible-command"
+printf 'running visible command terminal test\n'
+python3 "$root/tests/run-visible-command.py"
 export CUBRID_TEST_DIR="$testroot/schema-exit" CUBRID_SCHEMA_CASE=schema-exit
 printf 'running schema exit cleanup\n'
 "$root/tests/run-schema-flow.sh"
