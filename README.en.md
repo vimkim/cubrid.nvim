@@ -2,7 +2,7 @@
 
 [한국어](README.md) | English
 
-[cubrid.nvim](https://github.com/vimkim/cubrid.nvim) provides lexical highlighting and indentation for `.sql` and `.csql` files. It uses a separately installed CUBRID language server for completion and diagnostics. It does not execute SQL or connect to a database. Neovim 0.12.5 has been tested.
+[cubrid.nvim](https://github.com/vimkim/cubrid.nvim) provides lexical highlighting and indentation for `.sql` and `.csql` files. It uses a separately installed CUBRID language server for completion and diagnostics. It never executes your SQL. An optional schema exporter connects to CUBRID and runs fixed catalog queries. Neovim 0.12.5 has been tested.
 
 ## Language support and upgrades
 
@@ -124,6 +124,18 @@ LazyVim configures and enables `cubrid`. `mason = false` keeps installation exte
 A shared server with SHOW/hint authoring support supplies SHOW commands, optimizer hints, and `CUBRID-A` authoring warnings. The plugin forwards these results. An unsupported-coverage warning can remain after an authoring warning is corrected. An empty diagnostic list does not establish complete native SQL coverage.
 
 Neovim 0.12.5 on Linux is the tested platform. The plugin suite does not verify earlier versions or full LazyVim distribution startup. The separate isolated LazyVim check covers the configuration recorded in the acceptance report. See [acceptance evidence](docs/acceptance.md) for the installed artifact checks and independent completion verification.
+
+## Connect for schema completion
+
+Install a shared language-tools version that includes `cubrid-schema`, and make it and CSQL available on Neovim's `PATH`. Open a CUBRID buffer and run `:CubridConnect`. Enter a command such as `csql -udba demodb@localhost -C`, then enter the password. Both prompts hide their input. An empty command or Escape cancels the selection. An empty password uses an inline password if supplied, or no password. The command and password do not enter input history or Ex history.
+
+The exporter accepts supported CSQL connection options and runs its own fixed catalog queries. It does not run SQL from the buffer. The exporter request is sent on standard input. CSQL receives its password as a transient process argument. Use an appropriate local host and account for your environment.
+
+`:CubridRefreshSchema` fetches metadata again. If refresh fails, completion keeps the last successful schema and `:CubridSchemaStatus` reports `stale`. A failed switch clears the previous schema. `:CubridDisconnect` restores the configured offline snapshot. `:CubridReloadSchema` only reloads an existing snapshot and does not fetch from the database.
+
+A live connection overrides snapshot selection for every buffer attached to that LSP client until disconnect. Configure separate native roots for independent connections. If a buffer has several CUBRID clients, the command asks you to select one. To prompt once when an eligible client first attaches without configured metadata, set `schema_prompt = true`. The default is `false`.
+
+Trusted setup can set `schema_exporter` and `csql_path` to absolute executable paths. Their defaults are `cubrid-schema` and `csql` on `PATH`. `schema_timeout` defaults to 5 seconds and accepts positive values up to 300. The plugin writes private temporary snapshots and removes them when the session ends. Project files cannot select executables or credentials.
 
 ## Schema and commands
 

@@ -1,0 +1,43 @@
+local dir = assert(vim.env.CUBRID_TEST_DIR)
+local server = assert(vim.env.CUBRID_TEST_SERVER)
+local function wait(fn, message) assert(vim.wait(10000, fn, 20), message) end
+local prompts = 0
+vim.api.nvim_create_autocmd('CmdlineEnter', { callback = function()
+  if vim.fn.getcmdtype() == '-' then
+    prompts = prompts + 1
+    vim.defer_fn(function() vim.api.nvim_input('\r') end, 20)
+  end
+end })
+vim.notify = function() end
+vim.cmd('filetype plugin indent on')
+local cubrid = require('cubrid')
+cubrid.setup({ server_path = server, schema_prompt = true })
+vim.lsp.config('cubrid', { root_dir = function(buf, on_dir) on_dir(vim.fs.dirname(vim.api.nvim_buf_get_name(buf))) end })
+vim.fn.mkdir(dir .. '/bare', 'p')
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/bare/one.csql'))
+wait(function() return prompts == 1 end, 'first unconfigured client prompts')
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/bare/two.csql'))
+wait(function() return #vim.lsp.get_clients({ name = 'cubrid', bufnr = 0 }) == 1 end, 'second document attaches')
+vim.wait(500)
+assert(prompts == 1, 'one skipped prompt per client')
+cubrid.setup({ server_path = server, schema_prompt = true })
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/bare/three.csql'))
+wait(function() return #vim.lsp.get_clients({ name = 'cubrid', bufnr = 0 }) == 1 end, 'third document attaches')
+vim.wait(500)
+assert(prompts == 1, 'setup replacement does not reprompt the same client')
+vim.fn.mkdir(dir .. '/project', 'p')
+local function write(path, text) local f = assert(io.open(path, 'w')); f:write(text); f:close() end
+write(dir .. '/project/schema.json', '{"schemaVersion":1,"user":"DBA","relations":[]}')
+write(dir .. '/project/.cubrid-language.json', '{"schemaSnapshot":"schema.json"}')
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/project/file.csql'))
+wait(function() return #vim.lsp.get_clients({ name = 'cubrid', bufnr = 0 }) == 1 end, 'project client attaches')
+vim.wait(800)
+assert(prompts == 1, 'project metadata suppresses prompt')
+vim.fn.mkdir(dir .. '/invalid', 'p')
+write(dir .. '/invalid/.cubrid-language.json', '{"schemaSnapshot":"missing.json"}')
+vim.cmd('edit ' .. vim.fn.fnameescape(dir .. '/invalid/file.csql'))
+wait(function() return #vim.lsp.get_clients({ name = 'cubrid', bufnr = 0 }) == 1 end, 'invalid project client attaches')
+vim.wait(800)
+assert(prompts == 1, 'configured but unavailable project metadata suppresses prompt')
+write(dir .. '/schema-flow-result', 'passed')
+vim.cmd('qa!')

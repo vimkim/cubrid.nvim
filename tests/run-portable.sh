@@ -4,6 +4,9 @@ root=$(CDPATH= cd -- "$(dirname "$0")/.." && pwd)
 testroot=${CUBRID_TEST_DIR:?Set CUBRID_TEST_DIR to a fresh disposable directory}
 server=${CUBRID_TEST_SERVER:?Set CUBRID_TEST_SERVER to the real language server}
 case "$server" in /*) ;; *) printf 'CUBRID_TEST_SERVER must be absolute\n' >&2; exit 1 ;; esac
+export CUBRID_TEST_EXPORTER=${CUBRID_TEST_EXPORTER:-$(dirname "$server")/cubrid-schema}
+case "$CUBRID_TEST_EXPORTER" in /*) ;; *) printf 'CUBRID_TEST_EXPORTER must be absolute\n' >&2; exit 1 ;; esac
+[ -x "$CUBRID_TEST_EXPORTER" ] || { printf 'Schema exporter is not executable: %s\n' "$CUBRID_TEST_EXPORTER" >&2; exit 1; }
 [ -x "$server" ] || { printf 'Language server is not executable: %s\n' "$server" >&2; exit 1; }
 mkdir -p "$testroot"
 testroot=$(CDPATH= cd -- "$testroot" && pwd)
@@ -41,6 +44,7 @@ run_case() {
     exit "$status"
   fi
 }
+run_case schema-interface lua schema-connections.lua none
 run_case native-config-native lua native-config.lua native
 run_case native-config-setup lua native-config.lua setup
 run_case native-config-optout lua native-config.lua optout
@@ -80,4 +84,16 @@ for pid in $(cat "$children"); do
   fi
 done
 printf 'Owned direct children exited with Neovim\n' > "$testroot/exit/children-result.txt"
+export CUBRID_TEST_DIR="$testroot/schema-fixture" CUBRID_SCHEMA_FAKE=1 CUBRID_SCHEMA_CASE=schema-flow
+printf 'running schema fixture flow\n'
+"$root/tests/run-schema-flow.sh"
+export CUBRID_TEST_DIR="$testroot/schema-flow" CUBRID_SCHEMA_FAKE=0
+printf 'running real exporter schema flow\n'
+"$root/tests/run-schema-flow.sh"
+export CUBRID_TEST_DIR="$testroot/schema-prompt" CUBRID_SCHEMA_CASE=schema-prompt
+printf 'running schema prompt\n'
+"$root/tests/run-schema-flow.sh"
+export CUBRID_TEST_DIR="$testroot/schema-exit" CUBRID_SCHEMA_CASE=schema-exit
+printf 'running schema exit cleanup\n'
+"$root/tests/run-schema-flow.sh"
 printf 'passed\n' > "$testroot/result.txt"

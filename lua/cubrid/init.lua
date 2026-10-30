@@ -1,11 +1,13 @@
 local M = {}
 local completion = require('cubrid.completion')
 local environment = require('cubrid.environment')
+local connections = require('cubrid.connections')
 local session = { warned = {} }
 local keys = {
   server_path = true, file_extensions = true, auto_start = true, parser_worker = true, runtime_prefix = true,
   worker_manifest = true, worker_timeout = true, profile = true, script_mode = true,
-  config_path = true, schema_snapshot = true,
+  config_path = true, schema_snapshot = true, schema_exporter = true, csql_path = true,
+  schema_timeout = true, schema_prompt = true,
 }
 
 local function absolute(value, name)
@@ -32,6 +34,12 @@ local function parse(options)
     selected[suffix] = true
   end
   local result = { server = options.server_path ~= nil and absolute(options.server_path, 'server_path') or 'cubrid-language-server', file_extensions = selected, auto_start = options.auto_start ~= false, settings = vim.empty_dict() }
+  result.schema_exporter = options.schema_exporter ~= nil and absolute(options.schema_exporter, 'schema_exporter') or 'cubrid-schema'
+  result.csql_path = options.csql_path ~= nil and absolute(options.csql_path, 'csql_path') or 'csql'
+  result.schema_timeout = options.schema_timeout == nil and 5 or options.schema_timeout
+  if type(result.schema_timeout) ~= 'number' or result.schema_timeout ~= result.schema_timeout or result.schema_timeout <= 0 or result.schema_timeout > 300 then error('schema_timeout must be positive and at most 300', 3) end
+  if options.schema_prompt ~= nil and type(options.schema_prompt) ~= 'boolean' then error('schema_prompt must be a boolean', 3) end
+  result.schema_prompt = options.schema_prompt == true
   local values = result.settings
   if options.parser_worker ~= nil or options.runtime_prefix ~= nil then
     values.parserWorker = absolute(options.parser_worker, 'parser_worker')
@@ -137,7 +145,7 @@ local function resolve(config, server)
   return resolved
 end
 
-local function update(client)
+local function update(client, snapshot)
   local previous = client.config._cubrid_active
   local config = vim.lsp.config.cubrid
   local resolved = resolve(config, previous and previous.server)
@@ -146,6 +154,7 @@ local function update(client)
   client.config._cubrid_active = resolved
   client.settings = vim.deepcopy(config.settings or {})
   client.settings.cubrid = resolved.settings
+  if snapshot ~= nil then client.settings.cubrid.schemaSnapshot = snapshot end
   client.config.settings = client.settings
   client.config.init_options = vim.deepcopy(config.init_options or {})
   client.config.init_options.cubrid = vim.deepcopy(resolved.settings)
@@ -155,6 +164,7 @@ local function update(client)
 end
 
 function M.restart()
+  connections.cleanup_all()
   if session.restarting then return end
   session.restarting = true
   session.failed = nil
@@ -199,12 +209,20 @@ local function register()
   vim.api.nvim_create_autocmd({ 'BufReadPost', 'BufNewFile' }, { group = group, callback = function(args) inspect_filetype(args.buf) end })
   vim.api.nvim_create_autocmd('LspAttach', { group = group, callback = function(args)
     local client = vim.lsp.get_client_by_id(args.data.client_id)
-    if client and client.name == 'cubrid' then completion.attach(args.buf, client) end
+    if client and client.name == 'cubrid' then
+      completion.attach(args.buf, client)
+      connections.attached(client, args.buf)
+    end
     inspect_clients(args.buf)
   end })
   vim.api.nvim_create_autocmd('BufWipeout', { group = group, callback = function(args) session.warned[args.buf] = nil end })
   vim.api.nvim_create_autocmd({ 'BufUnload', 'BufWipeout' }, { group = group, callback = function(args) completion.detach(args.buf) end })
   vim.api.nvim_create_autocmd('LspDetach', { group = group, callback = function(args) completion.detach(args.buf, args.data.client_id) end })
+  vim.api.nvim_create_autocmd('VimLeavePre', { group = group, callback = connections.cleanup_all })
+  vim.api.nvim_create_user_command('CubridConnect', function() M.connect() end, {})
+  vim.api.nvim_create_user_command('CubridRefreshSchema', function() M.refresh_schema() end, {})
+  vim.api.nvim_create_user_command('CubridDisconnect', function() M.disconnect() end, {})
+  vim.api.nvim_create_user_command('CubridSchemaStatus', function() M.schema_status() end, {})
   vim.api.nvim_create_user_command('CubridReloadSchema', function() M.reload_schema() end, {})
   vim.api.nvim_create_user_command('CubridRestart', function() M.restart() end, {})
   vim.api.nvim_create_user_command('CubridDoctor', function() vim.notify(require('cubrid.doctor').format(M.doctor())) end, {})
@@ -268,6 +286,7 @@ end
 function M.setup(options)
   local config = parse(options == nil and {} or options)
   local previous = session.config
+  local active_connections = connections.prepare_setup()
   session.config = config
   register()
   if not session.filetypes then
@@ -283,10 +302,22 @@ function M.setup(options)
   if previous and previous.server ~= config.server and vim.lsp.is_enabled('cubrid') then
     M.restart()
   else
-    for _, client in ipairs(clients()) do update(client) end
+    for _, client in ipairs(clients()) do
+      if active_connections[client.id] then connections.restore_after_setup(client) else update(client) end
+    end
     if config.auto_start and not session.restarting then vim.lsp.enable('cubrid') end
   end
 end
+
+connections.configure({
+  config = function() return session.config or parse({}) end,
+  update = update,
+  notice = notice,
+})
+M.connect = connections.connect
+M.refresh_schema = connections.refresh
+M.disconnect = connections.disconnect
+M.schema_status = connections.status
 
 function M.doctor()
   local attached = vim.lsp.get_clients({ name = 'cubrid', bufnr = 0, _uninitialized = true })

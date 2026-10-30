@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           repository: vimkim/cubrid-language-tools
-          ref: 2a8842c45c4fb219e322afd731c27937a107324f
+          ref: c2fe7c63e214fea42fdc2f8ee047085b4173c3d8
           path: core
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
@@ -31,7 +31,7 @@ jobs:
           printf 'workflow=%s/%s/actions/runs/%s\nsource=%s\nrunner=%s\nimage=%s\ncoverage=portable; native parser success not tested\n' "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID" "$GITHUB_SHA" "$RUNNER_OS" "$ImageVersion" > "$RUNNER_TEMP/receipts/identity.txt"
           git -C plugin status --short --branch >> "$RUNNER_TEMP/receipts/identity.txt"
           git -C core rev-parse HEAD >> "$RUNNER_TEMP/receipts/identity.txt"
-          test "$(git -C core rev-parse HEAD)" = 2a8842c45c4fb219e322afd731c27937a107324f
+          test "$(git -C core rev-parse HEAD)" = c2fe7c63e214fea42fdc2f8ee047085b4173c3d8
           test -z "$(git -C plugin status --porcelain)"
           python --version >> "$RUNNER_TEMP/receipts/identity.txt"
       - name: Install exact core server

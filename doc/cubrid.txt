@@ -73,6 +73,10 @@ script_mode       "sql" or "csql".
 config_path       Absolute metadata configuration path.
 schema_snapshot   Omit to inherit project metadata, use vim.NIL to disable,
                   or set an absolute snapshot path.
+schema_exporter   Absolute exporter path. Default cubrid-schema on PATH.
+csql_path         Absolute CSQL path. Default csql on PATH.
+schema_timeout    Positive deadline in seconds, at most 300. Default 5.
+schema_prompt     Prompt once per client without configured metadata. Default false.
 
 The plugin warns about observed conflicting filetypes and attached foreign LSP
 clients. It does not change their state. If the server is missing, install it
@@ -157,6 +161,31 @@ If the buffer changes while a request is pending, the response is discarded.
 If an edit invalidates a visible menu, the plugin cancels it and reports the
 cancellation. A stale refusal after native insertion preserves the current
 buffer text and does not claim that the server edit was applied.
+
+LIVE SCHEMA                                                *cubrid-live-schema*
+
+Install a shared language-tools version containing cubrid-schema and put it
+and csql on PATH, or set their absolute paths in trusted Lua. Run
+:CubridConnect in a CUBRID buffer. Enter a command such as
+csql -udba demodb@localhost -C, then a password. Both prompts are hidden and
+excluded from input history. An empty command or Escape cancels the selection.
+An empty password uses the inline password, if any. The exporter receives the
+request through stdin. CSQL receives its password as a transient process
+argument. The exporter runs fixed catalog queries, never the buffer SQL.
+
+The selected connection overrides offline snapshots for all buffers of that
+client. Use separate native roots for separate clients. :CubridDisconnect
+clears the connection and restores offline selection. setup(), restart, client
+exit, and editor exit cancel owned jobs and remove private snapshots.
+
+:CubridConnect                                                 *:CubridConnect*
+    Select the current buffer's client and enter connection details.
+:CubridRefreshSchema                                     *:CubridRefreshSchema*
+    Fetch metadata again. Failure retains the last good schema as stale.
+:CubridDisconnect                                           *:CubridDisconnect*
+    Clear live metadata and restore the configured offline snapshot.
+:CubridSchemaStatus                                       *:CubridSchemaStatus*
+    Show client, root, phase, and safe connection identity after success.
 
 :CubridReloadSchema                                       *:CubridReloadSchema*
     Reload snapshots and report availability and stale state per document.

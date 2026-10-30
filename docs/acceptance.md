@@ -11,10 +11,29 @@ The evidence has separate scopes:
 - [Dependency warnings, N631](dependency-warnings-ticket.md) verifies WARN install guidance, prerequisite discovery, completion during native unavailability, and recovery on Neovim 0.12.5 with core `ad9d9434f6f8d74b8c44d9cadba0faf2362e6606`. Its focused native check uses a matching v4 worker. It does not requalify the full native coverage matrix.
 - [Packaged Blink and LazyVim verification](#independent-packaged-blink-and-lazyvim-verification) used plugin `12feab90dfaae8ce4ca49d45ed8dec6cc875dea7` runtime files and engine `8b1226c8f10686eb29d13d86cdda793df71d6645`. It verified SHOW and hint authoring in isolated profiles with the earlier native inputs. It did not verify v4 or the full personal profile.
 - [Approved SHOW/hint integration](#approved-showhint-integration-after-concurrent-ci) records the extracted portable and native suite results for that integration. Its test totals and unchanged-native-coverage statement refer to that earlier engine.
-- The [portable workflow](../.github/workflows/ci.yml) pins core `2a8842c45c4fb219e322afd731c27937a107324f`. It does not establish v4 native success. Local portable results below retain that exact engine identity.
+- The [portable workflow](../.github/workflows/ci.yml) pins core `c2fe7c63e214fea42fdc2f8ee047085b4173c3d8` for schema connections. It does not establish v4 native success. Earlier portable results retain their recorded engine identity.
 - Older personal-profile checks remain evidence only for their recorded configurations and commits. No personal Neovim profile was changed or retested for this documentation update.
 
 Neovim 0.12.5 on Linux remains the tested platform. Other versions and platforms require their own checks. Current configuration instructions are in the [English README](../README.en.md) and [Korean README](../README.md).
+
+## Schema connections, N636
+
+The task starts at plugin `44dfe90` on `schema/csql-completion`. The first public interface check failed before implementation because `schema_prompt` was unknown. The focused checks use Neovim 0.12.5, an isolated XDG profile, the shared task's editable server and `cubrid-schema`, and a controlled CSQL executable. They do not connect to a database or change a personal profile.
+
+The headless flow checks table and column completion after connect, refresh, stale refresh failure, failed switching, and offline restoration. It checks inline and separately entered credentials, input history, private directory and file modes, complete native settings, two clients with distinct roots, an obsolete export, setup replacement, client exit with a replaced native `on_exit`, an obsolete prompt, a rejected clear barrier, and setup replacement with a missing offline snapshot. The last case first failed because live names survived replacement. It passes after setup waits for a clear reload before restoring the offline setting. Separate cases check opt-in prompting, configured project metadata, and CSQL child cleanup on Neovim exit. The fake exporter case checks the original stdin request; the real exporter case runs the shared CLI with a controlled CSQL executable. Neither substitutes for a live database check.
+
+Run the portable suite with a compatible shared server and exporter in the same virtual environment. Use an empty test directory:
+
+```sh
+CUBRID_TEST_DIR=/tmp/cubrid-nvim-portable \
+CUBRID_TEST_SERVER=/absolute/path/to/cubrid-language-server \
+CUBRID_TEST_EXPORTER=/absolute/path/to/cubrid-schema \
+tests/run-portable.sh
+```
+
+The extracted package passed the complete portable suite in `/tmp/cubrid-nvim-schema-package-v6-check` on Neovim 0.12.5. The package was `/tmp/cubrid-nvim-schema-package-v6.tar.gz`, SHA-256 `a2711ea341729517b09e4f2b6b0543ea0171dc217d70fd12d4b75f9842c19e49`. The editable core tree was at `1beb47a`, whose production code matches `c2fe7c63e214fea42fdc2f8ee047085b4173c3d8`. Package inventory verification matched all 51 files to the task checkout. The setup restoration regression failed before the clear barrier and passed after it. A fixture PID publication race and an asynchronous status assertion were corrected during package verification.
+
+The suite requires an exporter and fails when it is missing. The workflow pins the local core commit `c2fe7c63e214fea42fdc2f8ee047085b4173c3d8`, which includes `cubrid-schema` and the `schemaConfigured` reload result. The core commit must be published before the plugin workflow can fetch it. Earlier Neovim versions and non-POSIX process cleanup are unverified.
 
 ## Baselines and host
 
