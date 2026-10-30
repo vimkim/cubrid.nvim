@@ -1,5 +1,20 @@
 # Neovim editor alpha acceptance
 
+## Current status and evidence scope
+
+This report preserves results at their recorded plugin and engine commits. Historical commands and local paths describe those runs. They are not a claim that those temporary environments or published archives contain current main.
+
+The current [core coverage reference](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.en.md) describes `bounded-query-dml-schema-engineer-ordered-v4`, at core commit `057e41b0c02d85d09905301f6bfccbb7ed0b8965`. Using that coverage requires the matching core, worker, manifest, and qualified runtime described in the [installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md). This documentation update does not upgrade the existing PATH installation or native assets and adds no v4 Neovim acceptance run.
+
+The evidence has separate scopes:
+
+- [Packaged Blink and LazyVim verification](#independent-packaged-blink-and-lazyvim-verification) used plugin `12feab90dfaae8ce4ca49d45ed8dec6cc875dea7` runtime files and engine `8b1226c8f10686eb29d13d86cdda793df71d6645`. It verified SHOW and hint authoring in isolated profiles with the earlier native inputs. It did not verify v4 or the full personal profile.
+- [Approved SHOW/hint integration](#approved-showhint-integration-after-concurrent-ci) records the extracted portable and native suite results for that integration. Its test totals and unchanged-native-coverage statement refer to that earlier engine.
+- The [portable workflow](../.github/workflows/ci.yml) pins core `2a8842c45c4fb219e322afd731c27937a107324f`. It does not establish v4 native success. Local portable results below retain that exact engine identity.
+- Older personal-profile checks remain evidence only for their recorded configurations and commits. No personal Neovim profile was changed or retested for this documentation update.
+
+Neovim 0.12.5 on Linux remains the tested platform. Other versions and platforms require their own checks. Current configuration instructions are in the [English README](../README.en.md) and [Korean README](../README.md).
+
 ## Baselines and host
 
 The consumer dispatch was `3b341bf57e7ebc90b65bbcdfe20e889b30d8b79a` on `alpha/editor`. The original engine baseline was `3bb70e492efe7bcb7de58a801281f7a088a9c39e`. The host ran Neovim 0.12.5 and Python 3.14.0. No lower Neovim version has been tested.

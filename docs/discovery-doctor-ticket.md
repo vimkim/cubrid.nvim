@@ -1,5 +1,7 @@
 # Installed tool discovery and doctor
 
+This is a historical ticket record. Its baselines, paths, planned steps, and authorization describe that work. For current behavior and setup, read the [consumer specification](spec.md) and [README](../README.en.md). See the [acceptance evidence scope](acceptance.md#current-status-and-evidence-scope) for the completed checks and their limits.
+
 The user wants `just sync` in cubrid-language-tools to remove Neovim CLI and native path configuration. Add a doctor that diagnoses failures. Simplify the user's Neovim setup afterward in a separate configuration checkout.
 
 ## Dispatch

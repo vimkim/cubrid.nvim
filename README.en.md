@@ -4,6 +4,16 @@
 
 [cubrid.nvim](https://github.com/vimkim/cubrid.nvim) provides lexical highlighting and indentation for `.sql` and `.csql` files. It uses a separately installed CUBRID language server for completion and diagnostics. It does not execute SQL or connect to a database. Neovim 0.12.5 has been tested.
 
+## Language support and upgrades
+
+The shared server owns completion, syntax diagnostics, and conservative `CUBRID-A` authoring warnings. SHOW and optimizer-hint suggestions cover more syntax than the native checker accepts. Correcting an authoring warning can leave an unsupported-coverage diagnostic.
+
+Current core coverage is `bounded-query-dml-schema-engineer-ordered-v4` for `cubrid-11.5.0.2704-cc94778` on Linux x86-64. It admits one argument-free `/*+ ORDERED */` immediately after a top-level literal `SELECT`. `FROM`, joins, and other hints remain unsupported in that form. Native SHOW coverage is only `SHOW TRACE`. See the [qualified coverage reference](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.en.md) for exact limits. SQL formatting and semantic or style linting remain future work.
+
+For a v4 upgrade, install the matching core and native worker with its manifest and qualified runtime. Follow the [shared engine installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md). Updating this plugin or running `just sync` does not rebuild the worker. A v3 worker does not supply v4 coverage. The Python wheel contains no native assets, and `--version` still reports `0.1.0.dev0`, which identifies neither the source commit nor coverage revision.
+
+[Acceptance evidence](docs/acceptance.md#current-status-and-evidence-scope) distinguishes the earlier Neovim, Blink, and isolated LazyVim checks from current core coverage. Those editor checks used earlier engines. They are not a new v4 or personal-profile acceptance run.
+
 ## Install with LazyVim or lazy.nvim
 
 Install Python 3.10 or later and the shared language server with its optional `lsp` dependencies. Follow the [shared engine installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md). The server is installed separately from this plugin. A qualified native parser worker and matching runtime are also separate and are needed for strict syntax diagnostics, not keyword completion.
@@ -113,7 +123,7 @@ LazyVim configures and enables `cubrid`. `mason = false` keeps installation exte
 
 A shared server with SHOW/hint authoring support supplies SHOW commands, optimizer hints, and `CUBRID-A` authoring warnings. The plugin forwards these results. An unsupported-coverage warning can remain after an authoring warning is corrected. An empty diagnostic list does not establish complete native SQL coverage.
 
-Only Neovim 0.12.5 on Linux was exercised here. Earlier versions and full LazyVim distribution startup are not verified by the plugin suite. See [acceptance evidence](docs/acceptance.md) for the installed artifact checks and independent completion verification.
+Neovim 0.12.5 on Linux is the tested platform. The plugin suite does not verify earlier versions or full LazyVim distribution startup. The separate isolated LazyVim check covers the configuration recorded in the acceptance report. See [acceptance evidence](docs/acceptance.md) for the installed artifact checks and independent completion verification.
 
 ## Schema and commands
 

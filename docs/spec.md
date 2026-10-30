@@ -1,9 +1,8 @@
-# Neovim editor alpha
+# Neovim consumer specification
 
-Build a locally installable runtime-path plugin that uses Neovim's built-in LSP and the existing CUBRID stdio server.
-Engine baseline is `3bb70e492efe7bcb7de58a801281f7a088a9c39e` in `/home/vimkim/gh/cubrid-language-tools`.
-The canonical task acceptance is `/home/vimkim/gh/cubrid-language-tools-editor-alpha/docs/tickets/editor-alpha-contract.md`.
-The coordinator supplies a selected design and exact dispatch commit before implementation.
+The runtime-path plugin uses Neovim's built-in LSP and the separately installed [shared CUBRID server](https://github.com/vimkim/cubrid-language-tools). Current setup is in the [English README](../README.en.md) and [Korean README](../README.md). The original alpha design and dispatch are historical records. Each new ticket supplies its exact baseline and acceptance contract.
+
+The shared engine owns [qualified coverage](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.en.md). Upgrade its core and matching worker, manifest, and runtime together using the [installation guide](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.en.md). Completion and authoring warnings do not imply native validity. [Acceptance evidence](acceptance.md#current-status-and-evidence-scope) records which engine each editor check used.
 
 The plugin owns default `.csql` and `.sql` detection with independent selection via `file_extensions`, native lexical highlighting, buffer-local indentation, trusted Lua setup, native client lifecycle, schema reload commands, help, packaging and editor tests.
 The engine owns every completion and diagnostic decision.

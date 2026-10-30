@@ -16,6 +16,30 @@ For LazyVim, add a plugin spec under lua/plugins with lazy = false,
 main = "cubrid", and opts = {} so setup registers filetypes at startup.
 See the repository README for the complete spec.
 
+COVERAGE AND UPGRADES                                      *cubrid-coverage*
+
+The shared server owns completion, syntax diagnostics, and conservative
+CUBRID-A authoring warnings. SHOW and hint suggestions are broader than native
+syntax coverage. Correcting an authoring warning can leave unsupported coverage.
+
+Current core coverage is bounded-query-dml-schema-engineer-ordered-v4 for
+cubrid-11.5.0.2704-cc94778 on Linux x86-64. The admitted hint form is one
+argument-free /*+ ORDERED */ immediately after top-level literal SELECT.
+FROM, joins, and other hints remain unsupported in that form. Native SHOW
+coverage is only SHOW TRACE. Exact limits are in the core reference:
+https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.en.md
+SQL formatting and semantic or style linting remain future work.
+
+Upgrade the core and native worker with its matching manifest and qualified
+runtime together. Follow the installation guide above. Plugin updates and
+just sync do not rebuild the worker. A v3 worker does not supply v4 coverage.
+The Python wheel contains no native assets. The --version value 0.1.0.dev0
+identifies neither the source commit nor the coverage revision.
+
+Earlier Neovim, Blink, and isolated LazyVim checks used earlier engines. They
+are not a new v4 or personal-profile acceptance run. See the evidence scope:
+https://github.com/vimkim/cubrid.nvim/blob/main/docs/acceptance.md
+
 SETUP                                                        *cubrid-setup*
 
 Call require('cubrid').setup(options) from trusted user Lua before opening a

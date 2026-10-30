@@ -1,5 +1,7 @@
 # Editor alpha client design
 
+This is a historical design record. Its baselines, paths, planned steps, and authorization describe that work. For current behavior and setup, read the [consumer specification](spec.md) and [README](../README.en.md). See the [acceptance evidence scope](acceptance.md#current-status-and-evidence-scope) for the completed checks and their limits.
+
 ## Problem and usage
 
 Users install a separate editor consumer and supply the existing shared language server. They open `.csql` files, accept completion edits, read syntax diagnostics, and explicitly refresh offline schema metadata. Both `.sql` and `.csql` are detected by default. A replacement `file_extensions` list independently selects either suffix or neither. The consumer implements no completion or parser engine.

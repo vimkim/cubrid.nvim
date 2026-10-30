@@ -1,5 +1,7 @@
 # Preserve the LSP replacement span through actual completion acceptance
 
+This is a historical ticket record. Its baselines, paths, planned steps, and authorization describe that work. For current behavior and setup, read the [consumer specification](spec.md) and [README](../README.en.md). See the [acceptance evidence scope](acceptance.md#current-status-and-evidence-scope) for the completed checks and their limits.
+
 Work item 582 follow-up. Baseline is `453c091e102b3d7c6649d37c55983ace06067bd5`.
 The original installed artifact passes direct text-edit tests but fails its documented native completion menu.
 The independent executable repro is `/home/vimkim/temp/cubrid-editor-alpha-aiYISe/neovim-independent/run-probe.sh menu-visible`.

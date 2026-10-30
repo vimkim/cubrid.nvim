@@ -1,5 +1,7 @@
 # Keep queued menu cancellation with its owner
 
+This is a historical ticket record. Its baselines, paths, planned steps, and authorization describe that work. For current behavior and setup, read the [consumer specification](spec.md) and [README](../README.en.md). See the [acceptance evidence scope](acceptance.md#current-status-and-evidence-scope) for the completed checks and their limits.
+
 Work item 582 follow-up, baseline `b02e13e0a5aa8996bef435f91f4f3d7ad8cdd7cb`.
 The repaired Ctrl-Y completion path and extracted suite pass, but the coordinator reproduced a remaining ownership race through real public editor APIs.
 

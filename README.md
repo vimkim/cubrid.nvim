@@ -4,6 +4,16 @@
 
 [cubrid.nvim](https://github.com/vimkim/cubrid.nvim)은 `.sql`과 `.csql` 파일에 구문 색상과 들여쓰기를 적용하고, 별도로 설치한 CUBRID 언어 서버로 자동 완성과 진단을 제공합니다. SQL을 실행하거나 데이터베이스에 접속하지 않습니다. Neovim 0.12.5에서 테스트했습니다.
 
+## 언어 지원과 업그레이드
+
+공유 서버가 자동 완성, 구문 진단, 보수적인 `CUBRID-A` 작성 경고를 담당합니다. SHOW와 옵티마이저 힌트의 자동 완성 범위는 네이티브 검사 범위보다 넓습니다. 작성 경고를 수정한 뒤에도 지원 범위 밖이라는 진단은 남을 수 있습니다.
+
+현재 코어의 검증 범위는 Linux x86-64의 `cubrid-11.5.0.2704-cc94778` 프로필과 `bounded-query-dml-schema-engineer-ordered-v4` 리비전입니다. 최상위 리터럴 `SELECT` 바로 뒤에 인수 없는 `/*+ ORDERED */` 하나를 허용합니다. 이 형태에서는 `FROM`, 조인, 다른 힌트를 지원하지 않습니다. 네이티브 SHOW 검사는 `SHOW TRACE`만 지원합니다. 정확한 제한은 [검증 범위 문서](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/coverage.md)를 참고하세요. SQL 포맷팅과 의미·스타일 린트는 향후 작업입니다.
+
+v4로 업그레이드할 때는 일치하는 코어와 네이티브 워커, 매니페스트, 검증된 런타임을 함께 설치하세요. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 따르세요. 이 플러그인을 업데이트하거나 `just sync`를 실행해도 워커를 다시 빌드하지 않습니다. v3 워커는 v4 범위를 제공하지 않습니다. Python 휠에는 네이티브 자산이 없으며, `--version`의 `0.1.0.dev0`만으로는 소스 커밋이나 검증 범위 리비전을 알 수 없습니다.
+
+[인수 증거](docs/acceptance.md#current-status-and-evidence-scope)는 이전 Neovim, Blink, 격리된 LazyVim 검증과 현재 코어 범위를 구분합니다. 해당 에디터 검증은 이전 엔진을 사용했습니다. 새로운 v4 검증이나 개인 프로필 검증을 뜻하지 않습니다.
+
 ## LazyVim 또는 lazy.nvim으로 설치
 
 Python 3.10 이상과 선택적 `lsp` 의존성을 포함한 공유 언어 서버를 설치하세요. [공유 엔진 설치 안내](https://github.com/vimkim/cubrid-language-tools/blob/main/docs/install.md)를 참고하세요. 서버는 플러그인과 별도로 설치합니다. 엄격한 구문 진단에는 검증된 네이티브 파서 워커와 일치하는 런타임도 별도로 필요합니다. 키워드 자동 완성에는 필요하지 않습니다.
@@ -115,7 +125,7 @@ LazyVim이 `cubrid`를 설정하고 활성화합니다. `mason = false`는 별�
 
 SHOW와 힌트 작성 지원이 포함된 공유 서버는 SHOW 명령, 옵티마이저 힌트, `CUBRID-A` 작성 경고를 제공합니다. 플러그인은 서버 결과를 전달합니다. 작성 경고를 수정해도 네이티브 검증 범위 밖이라는 경고는 남을 수 있습니다. 진단이 없다는 사실이 모든 SQL의 유효성을 보장하지는 않습니다.
 
-이 플러그인 테스트는 Linux의 Neovim 0.12.5에서 실행했습니다. 이전 버전과 LazyVim 배포판 전체의 시작 과정은 검증하지 않았습니다. 설치 아티팩트와 별도 완성 검증 결과는 [인수 증거](docs/acceptance.md)를 참조하세요.
+테스트한 플랫폼은 Linux의 Neovim 0.12.5입니다. 플러그인 테스트는 이전 버전이나 LazyVim 배포판 전체의 시작 과정을 검증하지 않습니다. 별도의 격리된 LazyVim 검증은 인수 보고서에 기록된 설정을 대상으로 합니다. 설치 아티팩트와 별도 완성 검증 결과는 [인수 증거](docs/acceptance.md)를 참조하세요.
 
 ## 스키마와 명령
 

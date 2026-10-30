@@ -1,5 +1,7 @@
 # Neovim editor alpha dispatch
 
+This is a historical ticket record. Its baselines, paths, planned steps, and authorization describe that work. For current behavior and setup, read the [consumer specification](spec.md) and [README](../README.en.md). See the [acceptance evidence scope](acceptance.md#current-status-and-evidence-scope) for the completed checks and their limits.
+
 Read AGENTS.md, docs/spec.md, docs/design.md, /home/vimkim/my-cubrid/CUBRID.md, and the central engine contracts before edits.
 This design snapshot comes from central coordinator commit 9464411dca58562519bd47b37e8d91b86db4df3f.
 The canonical acceptance contract is /home/vimkim/gh/cubrid-language-tools-editor-alpha/docs/tickets/editor-alpha-contract.md.

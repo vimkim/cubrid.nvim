@@ -1,5 +1,7 @@
 # Standard CUBRID LSP configuration dispatch
 
+This is a historical ticket record. Its baselines, paths, planned steps, and authorization describe that work. For current behavior and setup, read the [consumer specification](spec.md) and [README](../README.en.md). See the [acceptance evidence scope](acceptance.md#current-status-and-evidence-scope) for the completed checks and their limits.
+
 ## Goal and baseline
 
 Work item 606. Users configure the shared CUBRID language server through standard Neovim LSP configuration and receive SHOW/hint completion and authoring warnings through Blink. The coordinator supplies this ticket's exact dispatch commit in the implementer prompt. Product baseline is `6714657a0ea4ff19e2f54d61f6994aff1b7ec358`. Worktree is `/home/vimkim/gh/cubrid.nvim-standard-lsp`, branch `feat/standard-lsp-config`. Destination is local main in the primary Neovim checkout.
