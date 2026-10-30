@@ -12,6 +12,8 @@ import time
 
 root = pathlib.Path(__file__).resolve().parent.parent
 testroot = pathlib.Path(os.environ['CUBRID_TEST_DIR'])
+if testroot.exists() and any(testroot.iterdir()):
+    raise SystemExit('CUBRID_TEST_DIR must be empty; use a fresh test directory')
 testroot.mkdir(parents=True, exist_ok=True)
 env = dict(os.environ, CUBRID_PLUGIN_ROOT=str(root), TERM='xterm-256color')
 for name in ('CONFIG', 'DATA', 'CACHE', 'STATE'):
@@ -40,6 +42,7 @@ except OSError:
     pass
 os.close(master)
 (testroot / 'terminal.log').write_bytes(output)
+assert process.returncode == 0, 'Neovim failed; inspect terminal.log'
 assert (testroot / 'visible-result').exists(), 'native flow failed; inspect terminal.log'
 assert b'csql\x1b[C-udba\x1b[C-pInlineSecret\x1b[Cdemodb\x1b[C-C' in output, 'command text was not visible'
 assert b'****************' in output and b'PasswordSentinel' not in output, 'password was not masked'
