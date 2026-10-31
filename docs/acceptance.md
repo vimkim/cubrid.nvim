@@ -8,6 +8,7 @@ The current [core coverage reference](https://github.com/vimkim/cubrid-language-
 
 The evidence has separate scopes:
 
+- [Copilot warning coexistence](#copilot-warning-coexistence) verifies the exact `copilot` client-name exception with real stdio clients on current native LSP ownership. It does not exercise the GitHub Copilot AI service.
 - [Dependency warnings, N631](dependency-warnings-ticket.md) verifies WARN install guidance, prerequisite discovery, completion during native unavailability, and recovery on Neovim 0.12.5 with core `ad9d9434f6f8d74b8c44d9cadba0faf2362e6606`. Its focused native check uses a matching v4 worker. It does not requalify the full native coverage matrix.
 - [Packaged Blink and LazyVim verification](#independent-packaged-blink-and-lazyvim-verification) used plugin `12feab90dfaae8ce4ca49d45ed8dec6cc875dea7` runtime files and engine `8b1226c8f10686eb29d13d86cdda793df71d6645`. It verified SHOW and hint authoring in isolated profiles with the earlier native inputs. It did not verify v4 or the full personal profile.
 - [Approved SHOW/hint integration](#approved-showhint-integration-after-concurrent-ci) records the extracted portable and native suite results for that integration. Its test totals and unchanged-native-coverage statement refer to that earlier engine.
@@ -15,6 +16,51 @@ The evidence has separate scopes:
 - Older personal-profile checks remain evidence only for their recorded configurations and commits. No personal Neovim profile was changed or retested for this documentation update.
 
 Neovim 0.12.5 on Linux remains the tested platform. Other versions and platforms require their own checks. Current configuration instructions are in the [English README](../README.en.md) and [Korean README](../README.md).
+
+## Copilot warning coexistence
+
+On 2026-10-31, the existing test and fix commits rebased onto `main` commit `8160c40944a0be294fd9f741ae9ef321d85830fd`. Test-first commit `361c16f37fab82d8714d2c9acb0fcf8f7be9958a` changes only `tests/sql-defaults.lua`. Its runtime matches that main commit. Fix commit `69269b439ed44c449709e9bd99310e0281bf7f74` preserves native client ownership and excludes the exact name `copilot` from overlap warnings.
+
+The test starts the real shared stdio server as a client named `copilot`. It checks a client attached before setup, a later attachment, and preservation across `cubrid.restart()`. The existing assertions still verify warnings for other clients, actionable warning text, deduplication, and preservation of those clients across restart.
+
+The evidence directory is `/home/vimkim/temp/cubrid-copilot-657-93AzXBqC`. An archive of the test-first commit failed with exit 1 at `tests/sql-defaults.lua:25`, `preexisting copilot client is quiet`. The extracted fixed package passed with exit 0 and printed `SQL defaults and conflicts passed`. The focused driver uses `nvim --headless -u NONE`, prepends the selected plugin runtime, and isolates XDG configuration, data, cache, and state. Its exact editor invocation is:
+
+```sh
+timeout --kill-after=5s 120s /home/linuxbrew/.linuxbrew/bin/nvim --headless -u NONE \
+	--cmd 'lua vim.opt.runtimepath:prepend(vim.env.CUBRID_PLUGIN_ROOT); assert(vim.opt.runtimepath:get()[1] == vim.env.CUBRID_PLUGIN_ROOT)' \
+	-l "$CUBRID_PLUGIN_ROOT/tests/sql-defaults.lua"
+```
+
+The commands below produced the red, focused green, and package checks before local main integration. `run-focused.sh` in the evidence directory contains the complete environment setup and writes separate stdout, stderr, and exit receipts. Its output directories must be fresh when repeating a run.
+
+```sh
+evidence=/home/vimkim/temp/cubrid-copilot-657-93AzXBqC
+git archive 361c16f > "$evidence/test-first.tar"
+mkdir "$evidence/red-plugin"
+tar -xf "$evidence/test-first.tar" -C "$evidence/red-plugin"
+git diff --exit-code main 361c16f -- lua lsp ftplugin indent syntax \
+	> "$evidence/red-runtime-vs-main.diff"
+sh "$evidence/run-focused.sh" "$evidence/red-plugin" "$evidence/red"
+sh scripts/package.sh "$evidence/cubrid.nvim.tar.gz"
+python3 scripts/verify-package.py "$evidence/cubrid.nvim.tar.gz" \
+	> "$evidence/inventory.txt" 2> "$evidence/package-verification.log"
+mkdir "$evidence/extracted"
+tar -xzf "$evidence/cubrid.nvim.tar.gz" -C "$evidence/extracted"
+sh "$evidence/run-focused.sh" "$evidence/extracted" "$evidence/green"
+PATH=/home/linuxbrew/.linuxbrew/bin:/home/vimkim/.local/bin:$PATH \
+CUBRID_TEST_SERVER=/home/vimkim/.local/bin/cubrid-language-server \
+CUBRID_TEST_EXPORTER=/home/vimkim/.local/bin/cubrid-schema \
+CUBRID_TEST_NVIM_VERSION=0.12.5 CUBRID_TEST_DIR="$evidence/portable" \
+	sh "$evidence/extracted/tests/run-portable.sh" > "$evidence/portable.log" 2>&1
+```
+
+The package verifier matched all 53 archive files to the tracked source inventory and current file contents. The archive SHA-256 is `752a6e32b585fb73488a5a645a575fdef10ea6df13f9def832f3b04a2bd9fb95`. The archive excludes this acceptance report. The complete extracted portable suite passed with exit 0: all 25 regular cases, four schema flows, and the visible command terminal test passed. The direct-child exit receipt also passed.
+
+The portable result and per-case receipts are under `portable/`, with combined output in `portable.log`. `checks.json` summarizes the receipt values. The focused receipts are `red/result.txt` and `green/result.txt`. Their stderr logs contain the assertion and success message. `red-runtime-vs-main.diff` is empty. The package verifier passed again after the acceptance update, with output in `inventory-final.txt` and `package-verification-final.log`.
+
+The host runs Neovim 0.12.5 with LuaJIT 2.1.1788856981. The server reports `cubrid-language-server 0.1.0.dev0` and uses Python 3.14.0. The server and exporter resolve under `/home/vimkim/.local/share/uv/tools/cubrid-language-tools/bin`. All 22 installed package files match clean engine checkout `f04fafda88ca8ba8ccd8b87760ac51d2917f3b60`. `identity.json` records executable paths, hashes, versions, the installation origin, and the installed package hashes.
+
+This check verifies the warning policy through real Neovim LSP attachment. It does not use the GitHub Copilot AI service. The portable suite does not qualify native parser success. The full native suite, other Neovim versions, other operating systems, and the personal Neovim profile were not tested. The shared engine, native inputs, and personal configuration were unchanged.
 
 ## Schema connections, N636
 
